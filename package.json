@@ -1,0 +1,42 @@
+{
+  "name": "@jordanbonaldi/templatealgorithm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "watch": "nodemon",
+    "build": "rimraf ./build && tsc",
+    "start": "npm run build && node --unhandled-rejections=strict lib/index.js",
+    "prepublish": "npm run build && npm-auto-version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jordanbonaldi/TemplateAlgorithm.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jordanbonaldi/TemplateAlgorithm/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^13.9.1",
+    "@types/uuid": "^7.0.2",
+    "nodemon": "^2.0.2",
+    "rimraf": "^3.0.2",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.3"
+  },
+  "homepage": "https://github.com/jordanbonaldi/TemplateAlgorithm#readme",
+  "dependencies": {
+    "@jordanbonaldi/binancefetcher": "^1.1.7",
+    "@jordanbonaldi/indicatorsapi": "^0.0.5"
+  }
+}
