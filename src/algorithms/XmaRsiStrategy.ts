@@ -61,8 +61,8 @@ export default new class XmaRsiStrategy extends Strategy {
                 {
                     entryType: EntryType.ENTRY,
                     type: TradeTypes.SHORT,
-                    entry: parseFloat(candles[candles.length - 1 - 1].close),
-                    stop: parseFloat(candles[candles.length - 1 - 1].close) * (1 + params.stopLoss / 100),
+                    entry: parseFloat(reverseIndex(candles, 1).close),
+                    stop: parseFloat(reverseIndex(candles, 1).close) * (1 + params.stopLoss / 100),
                     asset: assetDetail,
                     timeframe: assetTimeFrame,
                     exit: 0
