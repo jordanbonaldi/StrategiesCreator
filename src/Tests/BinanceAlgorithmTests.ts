@@ -29,7 +29,7 @@ export class BinanceAlgorithmTests {
 
 export default function algorithmTest(
     callback: (candles: CandleChartResult[], assetDetail: string, assetTimeFrame: string) => Trade,
-    binanceProperties: BinanceProperties = {asset: 'BTCUSDT', timeframe: '1m'}
+    binanceProperties: BinanceProperties = {asset: 'BTCUSDT', timeframe: '4h'}
 ): Promise<Trade> {
     return new BinanceAlgorithmTests(callback, binanceProperties).load();
 }
