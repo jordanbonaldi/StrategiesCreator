@@ -37,7 +37,7 @@
   "homepage": "https://github.com/jordanbonaldi/TemplateAlgorithm#readme",
   "dependencies": {
     "@jordanbonaldi/binancefetcher": "^1.1.8",
-    "@jordanbonaldi/indicatorsapi": "^0.0.14",
+    "@jordanbonaldi/indicatorsapi": "latest",
     "tulind": "^0.8.18"
   }
 }
