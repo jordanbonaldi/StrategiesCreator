@@ -1,4 +1,4 @@
-import binanceAPI, {BinanceAPI, CandleChartResult} from "@jordanbonaldi/binancefetcher";
+import binanceAPI, {BinanceAPI, CandleChartResult, CandleModel} from "@jordanbonaldi/binancefetcher";
 import {Trade} from "@jordanbonaldi/indicatorsapi";
 import StrategyHandler from "../handlers/StrategyHandler";
 import Strategy, {StrategyParams} from "../algorithms/Strategy";
@@ -32,7 +32,7 @@ export default new class BinanceAlgorithmTests {
         return this.binanceAPI.getAllSymbols().then((symbols: string[]) =>
             Promise.all(symbols.map((symbol: string) =>
                 this.binanceAPI.getCandles(symbol, timeFrame)
-                    .then((candleResults: CandleChartResult[]) =>
+                    .then((candleResults: CandleModel[]) =>
                         trades.push(...StrategyHandler.getAll().map(
                             (strategy: Strategy<& StrategyParams>) => strategy.launchBootstrapAlgorithm(candleResults, symbol, timeFrame)
                         ))
@@ -48,7 +48,7 @@ export default new class BinanceAlgorithmTests {
     runAllOnAsset(properties: BinanceProperties): Promise<Trade[]> {
         return Promise.all(StrategyHandler.getAll().map((strategy: Strategy< & StrategyParams>) => this.binanceAPI.getCandles(
             properties.asset, properties.timeframe
-        ).then((candles: CandleChartResult[]) => strategy.launchBootstrapAlgorithm(candles, properties.asset, properties.timeframe))));
+        ).then((candles: CandleModel[]) => strategy.launchBootstrapAlgorithm(candles, properties.asset, properties.timeframe))));
     }
 
     /**
@@ -62,7 +62,7 @@ export default new class BinanceAlgorithmTests {
         return this.binanceAPI.getAllSymbols().then((symbols: string[]) =>
             Promise.all(symbols.map((symbol: string) =>
                 this.binanceAPI.getCandles(symbol, timeFrame)
-                    .then((candleResults: CandleChartResult[]) => {
+                    .then((candleResults: CandleModel[]) => {
                         let foundStrategy: Strategy< & StrategyParams> | undefined = StrategyHandler.getStrategyByName(strategy);
                         if (foundStrategy == null) return Error('Strategy not found');
 
@@ -80,7 +80,7 @@ export default new class BinanceAlgorithmTests {
      */
     runStrategyOnAsset(strategy: string, binanceProperties: BinanceProperties): Promise<Trade | Error> {
         return this.binanceAPI.getCandles(binanceProperties.asset, binanceProperties.timeframe)
-            .then((candles: CandleChartResult[]) => {
+            .then((candles: CandleModel[]) => {
                 let foundStrategy: Strategy< & StrategyParams> | undefined = StrategyHandler.getStrategyByName(strategy);
                 if (foundStrategy == null) return Error('Strategy not found');
 

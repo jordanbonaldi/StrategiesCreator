@@ -1,6 +1,6 @@
 import Strategy, {StrategyParams} from "./Strategy";
 import { EntryType, reverseIndex, rsi, sma, Trade, TradeTypes, Zlema } from "@jordanbonaldi/indicatorsapi";
-import { CandleChartResult } from "@jordanbonaldi/binancefetcher";
+import {CandleChartResult, CandleModel} from "@jordanbonaldi/binancefetcher";
 
 export interface XmaRsiInput extends StrategyParams {
     xmaPeriod: number,
@@ -31,7 +31,8 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
      * @param trade possible current trade
      * @param params params taken
      */
-    algorithm(candles: CandleChartResult[], assetDetail: string, assetTimeFrame: string, trade: Trade | undefined, params: XmaRsiInput): Trade {
+    algorithm(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, trade: Trade | undefined, params: XmaRsiInput): Trade {
+        console.log(candles);
         let printDebug: Function = (): void => {
             console.log(`Candles length: ${candles.length}`);
             console.log("candles: " + candles.map(c => c.close)[998]);
@@ -61,12 +62,12 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             return almaValues.reverse();
         }
 
-        let xmaCandles = candles.map(c => parseFloat(c.close)).slice(0, -1);
-        let rsiCandles = candles.map(c => parseFloat(c.close)).slice(0, -1);
+        let xmaCandles = candles.map(c => c.close).slice(0, -1);
+        let rsiCandles = candles.map(c => c.close).slice(0, -1);
         let myXma: number[] = Alma({ period: params.xmaPeriod, values: xmaCandles, offset: 0.5, sigma: 6 });
         let myRsi = rsi({ period: params.rsiPeriod, values: rsiCandles });
         let myXmaRsi = sma({ period: params.xmaRsiPeriod, values: myRsi });
-        //printDebug()
+        printDebug()
 
         let isXmaBull = reverseIndex(myXma) > reverseIndex(myXma, 1);
         let isXmaRsiBull = reverseIndex(myXmaRsi) > reverseIndex(myXmaRsi, 1);
@@ -75,8 +76,8 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             {
                 entryType: EntryType.ENTRY,
                 type: TradeTypes.LONG,
-                entry: parseFloat(reverseIndex(candles, 1).close),
-                stop: parseFloat(reverseIndex(candles, 1).close) * (1 - params.stopLoss / 100),
+                entry: reverseIndex(candles, 1).close,
+                stop: reverseIndex(candles, 1).close * (1 - params.stopLoss / 100),
                 asset: assetDetail,
                 timeframe: assetTimeFrame,
                 exit: 0
@@ -84,8 +85,8 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                 {
                     entryType: EntryType.ENTRY,
                     type: TradeTypes.SHORT,
-                    entry: parseFloat(reverseIndex(candles, 1).close),
-                    stop: parseFloat(reverseIndex(candles, 1).close) * (1 + params.stopLoss / 100),
+                    entry: reverseIndex(candles, 1).close,
+                    stop: reverseIndex(candles, 1).close * (1 + params.stopLoss / 100),
                     asset: assetDetail,
                     timeframe: assetTimeFrame,
                     exit: 0

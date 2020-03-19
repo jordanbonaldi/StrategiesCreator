@@ -1,4 +1,4 @@
-import {CandleChartResult} from "@jordanbonaldi/binancefetcher";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
 import {Trade} from "@jordanbonaldi/indicatorsapi";
 import StrategyHandler from "../handlers/StrategyHandler";
 
@@ -16,7 +16,7 @@ export default  abstract class Strategy<T> {
     }
 
     launchBootstrapAlgorithm(
-        candles: CandleChartResult[],
+        candles: CandleModel[],
         assetDetail: string,
         assetTimeFrame: string,
         trade: Trade | undefined = undefined,
@@ -25,5 +25,5 @@ export default  abstract class Strategy<T> {
         return this.algorithm(candles, assetDetail, assetTimeFrame, trade, params);
     }
 
-    abstract algorithm(candles: CandleChartResult[], assetDetail: string, assetTimeFrame: string, trade: Trade | undefined, params: T & StrategyParams): Trade;
+    abstract algorithm(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, trade: Trade | undefined, params: T & StrategyParams): Trade;
 }
