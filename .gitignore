@@ -109,3 +109,4 @@ dist
 .idea/
 
 lib/
+package-lock.json
