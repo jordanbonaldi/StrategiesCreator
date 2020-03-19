@@ -1,12 +1,24 @@
-import Strategy from "./Strategy";
+import Strategy, {StrategyParams} from "./Strategy";
 import { EntryType, reverseIndex, rsi, sma, Trade, TradeTypes, Zlema } from "@jordanbonaldi/indicatorsapi";
 import { CandleChartResult } from "@jordanbonaldi/binancefetcher";
 
-export default new class XmaRsiStrategy extends Strategy {
+export interface XmaRsiInput extends StrategyParams {
+    xmaPeriod: number,
+    xmaRsiPeriod: number,
+    rsiPeriod: number,
+    stopLoss: number
+}
+
+export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
 
 
     constructor() {
-        super('XmaRsiStrategy');
+        super('XmaRsiStrategy', {
+            xmaPeriod: 21,
+            xmaRsiPeriod: 21,
+            rsiPeriod: 14,
+            stopLoss: 3.5
+        });
     }
 
     /**
@@ -19,15 +31,7 @@ export default new class XmaRsiStrategy extends Strategy {
      * @param trade possible current trade
      * @param params params taken
      */
-    algorithm(candles: CandleChartResult[], assetDetail: string, assetTimeFrame: string, params: any, trade: Trade | undefined): Trade {
-        if (!params.hasOwnProperty('xmaPeriod'))
-            params = {
-                xmaPeriod: 21,
-                xmaRsiPeriod: 21,
-                rsiPeriod: 14,
-                stopLoss: 3.5
-            };
-
+    algorithm(candles: CandleChartResult[], assetDetail: string, assetTimeFrame: string, trade: Trade | undefined, params: XmaRsiInput): Trade {
         let printDebug: Function = (): void => {
             console.log(`Candles length: ${candles.length}`);
             console.log("candles: " + candles.map(c => c.close)[998]);
@@ -56,8 +60,6 @@ export default new class XmaRsiStrategy extends Strategy {
                 almaValues.push(almaCandle(candleIndex));
             return almaValues.reverse();
         }
-
-        console.log(params);
 
         let xmaCandles = candles.map(c => parseFloat(c.close)).slice(0, -1);
         let rsiCandles = candles.map(c => parseFloat(c.close)).slice(0, -1);

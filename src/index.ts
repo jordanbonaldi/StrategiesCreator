@@ -1,8 +1,11 @@
-import { Trade } from "@jordanbonaldi/indicatorsapi";
-import algorithmTest from "./tests/BinanceAlgorithmTests";
-import StrategyHandler from "./handlers/StrategyHandler";
-import Config from "../config/Config";
+import BinanceAlgorithmTests from "./tests/BinanceAlgorithmTests";
+import {Trade} from "@jordanbonaldi/indicatorsapi";
 
-Config.strategies;
+BinanceAlgorithmTests.connect()
+    .then(instance => instance.runStrategyOnAsset('XmaRsiStrategy', {
+        asset: 'BTCUSDT',
+        timeframe: '4h'
+    }))
+    .then((trades: Trade | Error) => console.log(trades))
+;
 
-Promise.all(StrategyHandler.getAll().map(strategy => algorithmTest(strategy.algorithm).then((trade: Trade) => console.log(trade))));

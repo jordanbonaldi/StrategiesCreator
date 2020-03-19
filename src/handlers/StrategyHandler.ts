@@ -1,14 +1,14 @@
-import Strategy from "../algorithms/Strategy";
+import Strategy, {StrategyParams} from "../algorithms/Strategy";
 
 export default new class StrategyHandler {
 
-    strategy : Strategy[] = [];
+    strategy : Strategy< & StrategyParams >[] = [];
 
     /**
      *
      * @param strategy
      */
-    add(strategy: Strategy): void {
+    add(strategy: Strategy< & StrategyParams >): void {
        this.strategy.push(strategy);
     }
 
@@ -16,11 +16,11 @@ export default new class StrategyHandler {
      *
      * @param name
      */
-    getStrategyByName(name: string): Strategy | undefined {
-        return this.strategy.filter((strategy: Strategy) => strategy.name === name)[0];
+    getStrategyByName(name: string): Strategy< & StrategyParams> | undefined {
+        return this.strategy.filter((strategy: Strategy< & StrategyParams >) => strategy.name === name)[0];
     }
 
-    getAll(): Strategy[] {
+    getAll(): Strategy< & StrategyParams >[] {
         return this.strategy;
     }
 
