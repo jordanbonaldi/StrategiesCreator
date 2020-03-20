@@ -60,6 +60,21 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         });
     }
 
+    backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, params: IchimokuLongInput): Trade[] {
+        let Trades: Trade[] = [];
+        let currentTrade: Trade | undefined = undefined;
+
+        for (let a = params.ichimokuInput.spanPeriod + 1; a < candles.length; a++) {
+            currentTrade = this.algorithm(candles.slice(0, a), assetDetail, assetTimeFrame, currentTrade, params);
+            if (currentTrade.entryType != EntryType.NOTHING) {
+                console.log(currentTrade)
+                Trades.push(currentTrade)
+            }
+        }
+
+        return Trades;
+    }
+
     /**
      *
      * @param candles Candle Model of type Candle
@@ -98,38 +113,43 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         let tmpChiku: boolean = lastCandle.close > lagCandle.close && lastCandle.close > lagIchi.conversion && lastCandle.close > lagIchi.base && lastCandle.close > kumoMaxPast;
         let isChikuAboveAll: boolean = params.entry.entryChikuAboveAll ? tmpChiku : true;
 
-        //let exitIsUnderTenkan: boolean = params.exit.exitPriceUnderTenkan ? lastCandle.close < lastIchi.conversion : true;
-        //let exitIsUnderKijun: boolean = params.exit.exitPriceUnderKijun ? lastCandle.close < lastIchi.base : true;
-        //let exitIsCrossTKBear: boolean = params.exit.exitCrossTKBear ? lastIchi.conversion < lastIchi.base : true;
-        //let exitIsUnderKumo: boolean = params.exit.exitPriceUnderKumo ? lastCandle.close < kumoMax : true;
-        //let exitIsFuturDark: boolean = params.exit.exitFuturDark ? lagIchi.spanA < lagIchi.spanB : true;
-        //let exitIsChikuUnderSmthg: boolean = params.exit.exitChikuUnderSmthg ? !tmpChiku : true;
+        let exitIsUnderTenkan: boolean = params.exit.exitPriceUnderTenkan ? lastCandle.close < lastIchi.conversion : true;
+        let exitIsUnderKijun: boolean = params.exit.exitPriceUnderKijun ? lastCandle.close < lastIchi.base : true;
+        let exitIsCrossTKBear: boolean = params.exit.exitCrossTKBear ? lastIchi.conversion < lastIchi.base : true;
+        let exitIsUnderKumo: boolean = params.exit.exitPriceUnderKumo ? lastCandle.close < kumoMax : true;
+        let exitIsFuturDark: boolean = params.exit.exitFuturDark ? lagIchi.spanA < lagIchi.spanB : true;
+        let exitIsChikuUnderSmthg: boolean = params.exit.exitChikuUnderSmthg ? !tmpChiku : true;
 
         let entryOneCond: boolean = params.entry.entryCrossTKBull || params.entry.entryPriceAboveTenkan || params.entry.entryPriceAboveKijun || params.entry.entryPriceAboveKumo || params.entry.entryChikuAboveAll || params.entry.entryFuturBright
-        let longCond: boolean = entryOneCond && (isCrossTKBull && isAboveKijun && isAboveTenkan && isAboveKumo && isChikuAboveAll && isFuturBright)
+        let longCond: boolean = entryOneCond && isCrossTKBull && isAboveKijun && isAboveTenkan && isAboveKumo && isChikuAboveAll && isFuturBright
 
-        //let exitOneCond: boolean = params.exit.exitCrossTKBear || params.exit.exitPriceUnderTenkan || params.exit.exitPriceUnderKijun || params.exit.exitPriceUnderKumo || params.exit.exitChikuUnderSmthg || params.exit.exitFuturDark
-        //let exitCond: boolean = exitOneCond && (exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderSmthg && exitIsFuturDark) ? true : false
+        let exitOneCond: boolean = params.exit.exitCrossTKBear || params.exit.exitPriceUnderTenkan || params.exit.exitPriceUnderKijun || params.exit.exitPriceUnderKumo || params.exit.exitChikuUnderSmthg || params.exit.exitFuturDark
+        let exitCond: boolean = exitOneCond && exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderSmthg && exitIsFuturDark
 
-        //printDebug()
-
-        return longCond ?
-            {
+        let currentTrade: Trade | undefined =
+            longCond && !trade ? {
                 entryType: EntryType.ENTRY,
                 type: TradeTypes.LONG,
-                entry: reverseIndex(candles, 1).close,
-                stop: 0,
+                price: reverseIndex(candles, 1).close,
+                stoploss: 0,
                 asset: assetDetail,
                 timeframe: assetTimeFrame,
-                exit: 0
-            } : {
-                entryType: EntryType.NOTHING,
+            } : exitCond && trade ? {
+                entryType: EntryType.EXIT,
                 type: TradeTypes.LONG,
-                entry: 0,
-                stop: 0,
+                price: reverseIndex(candles, 1).close,
+                stoploss: 0,
                 asset: assetDetail,
                 timeframe: assetTimeFrame,
-                exit: 0
-            };
+            } : undefined
+
+        return currentTrade ? currentTrade : {
+            entryType: EntryType.NOTHING,
+            type: TradeTypes.LONG,
+            price: 0,
+            stoploss: 0,
+            asset: assetDetail,
+            timeframe: assetTimeFrame,
+        };
     }
 }

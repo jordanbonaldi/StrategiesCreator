@@ -57,28 +57,25 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             {
                 entryType: EntryType.ENTRY,
                 type: TradeTypes.LONG,
-                entry: reverseIndex(candles, 1).close,
-                stop: reverseIndex(candles, 1).close * (1 - params.stopLoss / 100),
+                price: reverseIndex(candles, 1).close,
+                stoploss: reverseIndex(candles, 1).close * (1 - params.stopLoss / 100),
                 asset: assetDetail,
                 timeframe: assetTimeFrame,
-                exit: 0
             } : !isXmaBull && !isXmaRsiBull ?
                 {
                     entryType: EntryType.ENTRY,
                     type: TradeTypes.SHORT,
-                    entry: reverseIndex(candles, 1).close,
-                    stop: reverseIndex(candles, 1).close * (1 + params.stopLoss / 100),
+                    price: reverseIndex(candles, 1).close,
+                    stoploss: reverseIndex(candles, 1).close * (1 + params.stopLoss / 100),
                     asset: assetDetail,
                     timeframe: assetTimeFrame,
-                    exit: 0
                 } : {
                     entryType: EntryType.NOTHING,
                     type: TradeTypes.LONG,
-                    entry: 0,
-                    stop: 0,
+                    price: 0,
+                    stoploss: 0,
                     asset: assetDetail,
                     timeframe: assetTimeFrame,
-                    exit: 0
                 };
     }
 }
