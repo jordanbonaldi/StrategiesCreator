@@ -1,6 +1,6 @@
-import Strategy, {StrategyParams} from "./Strategy";
-import {Alma, EntryType, reverseIndex, rsi, sma, Trade, TradeTypes} from "@jordanbonaldi/indicatorsapi";
-import {CandleChartResult, CandleModel} from "@jordanbonaldi/binancefetcher";
+import Strategy, { StrategyParams } from "./Strategy";
+import { Alma, EntryType, reverseIndex, rsi, sma, Trade, TradeTypes } from "@jordanbonaldi/indicatorsapi";
+import { CandleChartResult, CandleModel } from "@jordanbonaldi/binancefetcher";
 
 export interface XmaRsiInput extends StrategyParams {
     xmaPeriod: number,
@@ -32,7 +32,6 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
      * @param params params taken
      */
     algorithm(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, trade: Trade | undefined, params: XmaRsiInput): Trade {
-        console.log(candles);
         let printDebug: Function = (): void => {
             console.log(`Candles length: ${candles.length}`);
             console.log("candles: " + candles.map(c => c.close)[998]);
@@ -50,6 +49,9 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
 
         let isXmaBull = reverseIndex(myXma) > reverseIndex(myXma, 1);
         let isXmaRsiBull = reverseIndex(myXmaRsi) > reverseIndex(myXmaRsi, 1);
+
+        console.log(isXmaBull)
+        console.log(isXmaRsiBull)
 
         return isXmaBull && isXmaRsiBull ?
             {
@@ -79,5 +81,4 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     exit: 0
                 };
     }
-
 }
