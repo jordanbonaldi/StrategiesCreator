@@ -67,8 +67,9 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         for (let a = params.ichimokuInput.spanPeriod + 1; a < candles.length; a++) {
             currentTrade = this.algorithm(candles.slice(0, a), assetDetail, assetTimeFrame, currentTrade, params);
             if (currentTrade.entryType != EntryType.NOTHING) {
-                console.log(currentTrade)
-                Trades.push(currentTrade)
+                console.log(currentTrade);
+                Trades.push(currentTrade);
+                currentTrade = undefined;
             }
         }
 
@@ -120,11 +121,11 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         let exitIsFuturDark: boolean = params.exit.exitFuturDark ? lagIchi.spanA < lagIchi.spanB : true;
         let exitIsChikuUnderSmthg: boolean = params.exit.exitChikuUnderSmthg ? !tmpChiku : true;
 
-        let entryOneCond: boolean = params.entry.entryCrossTKBull || params.entry.entryPriceAboveTenkan || params.entry.entryPriceAboveKijun || params.entry.entryPriceAboveKumo || params.entry.entryChikuAboveAll || params.entry.entryFuturBright
-        let longCond: boolean = entryOneCond && isCrossTKBull && isAboveKijun && isAboveTenkan && isAboveKumo && isChikuAboveAll && isFuturBright
+        let entryOneCond: boolean = params.entry.entryCrossTKBull || params.entry.entryPriceAboveTenkan || params.entry.entryPriceAboveKijun || params.entry.entryPriceAboveKumo || params.entry.entryChikuAboveAll || params.entry.entryFuturBright;
+        let longCond: boolean = entryOneCond && isCrossTKBull && isAboveKijun && isAboveTenkan && isAboveKumo && isChikuAboveAll && isFuturBright;
 
-        let exitOneCond: boolean = params.exit.exitCrossTKBear || params.exit.exitPriceUnderTenkan || params.exit.exitPriceUnderKijun || params.exit.exitPriceUnderKumo || params.exit.exitChikuUnderSmthg || params.exit.exitFuturDark
-        let exitCond: boolean = exitOneCond && exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderSmthg && exitIsFuturDark
+        let exitOneCond: boolean = params.exit.exitCrossTKBear || params.exit.exitPriceUnderTenkan || params.exit.exitPriceUnderKijun || params.exit.exitPriceUnderKumo || params.exit.exitChikuUnderSmthg || params.exit.exitFuturDark;
+        let exitCond: boolean = exitOneCond && exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderSmthg && exitIsFuturDark;
 
         let currentTrade: Trade | undefined =
             longCond && !trade ? {
