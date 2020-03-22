@@ -3,6 +3,7 @@ import { Trade } from "@jordanbonaldi/indicatorsapi";
 import StrategyHandler from "../handlers/StrategyHandler";
 import Strategy, { StrategyParams } from "../algorithms/Strategy";
 import Config from "../../config/Config";
+import StrategyResult from "../algorithms/StrategyResult";
 
 export interface BinanceProperties {
     asset: string,
@@ -85,6 +86,21 @@ export default new class BinanceAlgorithmTests {
                 if (foundStrategy == null) return Error('Strategy not found');
 
                 return foundStrategy.launchBootstrapAlgorithm(candles, binanceProperties.asset, binanceProperties.timeframe)
+            })
+    }
+
+    /**
+     *
+     * @param strategy
+     * @param binanceProperties
+     */
+    runBacktestOnAsset(strategy: string, binanceProperties: BinanceProperties): Promise<StrategyResult | Error> {
+        return this.binanceAPI.getCandles(binanceProperties.asset, binanceProperties.timeframe)
+            .then((candles: CandleModel[]) => {
+                let foundStrategy: Strategy<& StrategyParams> | undefined = StrategyHandler.getStrategyByName(strategy);
+                if (foundStrategy == null) return Error('Strategy not found');
+
+                return foundStrategy.launchBootstrapBacktest(candles, binanceProperties.asset, binanceProperties.timeframe)
             })
     }
 }

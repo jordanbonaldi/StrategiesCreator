@@ -21,6 +21,10 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
         });
     }
 
+    backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, backtestParams: BacktestParams, params: XmaRsiInput): Trade[] {
+        return []
+    }
+
     /**
      *
      * @param candles Candle Model of type Candle

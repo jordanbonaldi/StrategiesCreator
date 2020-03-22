@@ -1,6 +1,9 @@
 import Strategy, { StrategyParams } from "./Strategy";
-import { EntryType, reverseIndex, ichimokucloud, Trade, TradeTypes, IchimokuCloud } from "@jordanbonaldi/indicatorsapi";
-import { CandleChartResult, CandleModel } from "@jordanbonaldi/binancefetcher";
+import { EntryType, reverseIndex, ichimokucloud, Trade, TradeTypes } from "@jordanbonaldi/indicatorsapi";
+import { CandleModel } from "@jordanbonaldi/binancefetcher";
+import StrategyResult from "./StrategyResult";
+import TradeResult, { TradeStatus } from "./TradeResult";
+import BacktestParams, { RiskType } from "./BacktestParams";
 
 export interface IchimokuLongInput extends StrategyParams {
     ichimokuInput: {
@@ -26,11 +29,14 @@ export interface IchimokuLongInput extends StrategyParams {
         exitFuturDark: boolean;
         useStopLoss: boolean;
         stopPerc: number;
+    },
+    misc: {
+        long: boolean,
+        short: boolean,
     }
 }
 
 export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput> {
-
     constructor() {
         super('IchimokuLongStrategy', {
             ichimokuInput: {
@@ -48,32 +54,68 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 entryFuturBright: true,
             },
             exit: {
-                exitCrossTKBear: true,
+                exitCrossTKBear: false,
                 exitPriceUnderTenkan: false,
                 exitPriceUnderKijun: true,
-                exitPriceUnderKumo: true,
-                exitChikuUnderSmthg: true,
-                exitFuturDark: true,
-                useStopLoss: false,
-                stopPerc: 10,
+                exitPriceUnderKumo: false,
+                exitChikuUnderSmthg: false,
+                exitFuturDark: false,
+                useStopLoss: true,
+                stopPerc: 10
+            },
+            misc: {
+                long: true,
+                short: false,
             }
-        });
+        },
+            {
+                warmup: 120,
+                equity: 1000,
+                riskType: RiskType.PERCENT,
+                riskInTrade: 90
+            });
     }
 
-    backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, params: IchimokuLongInput): Trade[] {
-        let Trades: Trade[] = [];
-        let currentTrade: Trade | undefined = undefined;
+    tradeResultCalc(entryTrade: Trade, exitTrade: Trade): TradeResult {
+        return {
+            entryTrade: entryTrade,
+            exitTrade: exitTrade,
+            pricePercent: ((exitTrade.price - entryTrade.price) / entryTrade.price * 100),
+            tradeStatus: entryTrade.price < exitTrade.price ? TradeStatus.WIN : entryTrade.price > exitTrade.price ? TradeStatus.LOST : TradeStatus.BREAKEVEN,
+        };
+    }
 
-        for (let a = params.ichimokuInput.spanPeriod + 1; a < candles.length; a++) {
+    backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, backtestParams: BacktestParams, params: IchimokuLongInput): StrategyResult {
+        let strategyResult: StrategyResult = { total: 0, win: 0, lost: 0, equityPercent: 100, maxDrowDown: 0, riskRewardRatio: 0, tradeResults: [] };
+        let currentTrade: Trade | undefined = undefined;
+        let lastTrade: Trade | undefined = undefined;
+        let tradeResult: TradeResult;
+        let currentEquity: number = backtestParams.equity;
+
+        for (let a = backtestParams.warmup; a < candles.length; a++) {
             currentTrade = this.algorithm(candles.slice(0, a), assetDetail, assetTimeFrame, currentTrade, params);
-            if (currentTrade.entryType != EntryType.NOTHING) {
-                console.log(currentTrade);
-                Trades.push(currentTrade);
-                currentTrade = undefined;
+            if (currentTrade.entryType == EntryType.ENTRY && !lastTrade) {
+                lastTrade = currentTrade;
             }
+            if (currentTrade.entryType == EntryType.EXIT && lastTrade) {
+                tradeResult = this.tradeResultCalc(lastTrade, currentTrade);
+                if (backtestParams.riskType == RiskType.PERCENT) {
+                    console.log("price %: " + tradeResult.pricePercent.toFixed(2));
+                    currentEquity += (backtestParams.riskInTrade / 100 * currentEquity) / 100 * tradeResult.pricePercent;
+                } else {
+                    currentEquity += backtestParams.riskInTrade * (1 + tradeResult.pricePercent / 100);
+                }
+                console.log("current equity: " + currentEquity.toFixed(2));
+                tradeResult.tradeStatus == TradeStatus.WIN ? strategyResult.win++ : strategyResult.lost++;
+                strategyResult.equityPercent = (currentEquity - backtestParams.equity) / backtestParams.equity * 100;
+                strategyResult.total++;
+                strategyResult.tradeResults.push(tradeResult);
+                lastTrade = undefined;
+            }
+            currentTrade = lastTrade;
         }
 
-        return Trades;
+        return strategyResult;
     }
 
     /**
@@ -98,7 +140,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         let highs: number[] = candles.map(c => c.high).slice(0, -1);
         let myIchi = ichimokucloud({ low: lows, high: highs, conversionPeriod: params.ichimokuInput.conversionPeriod, basePeriod: params.ichimokuInput.basePeriod, displacement: params.ichimokuInput.displacement, spanPeriod: params.ichimokuInput.spanPeriod });
 
-        let lastCandle: CandleModel = reverseIndex(candles, 1)
+        let lastCandle: CandleModel = reverseIndex(candles, 1);
         let lagCandle: CandleModel = reverseIndex(candles, params.ichimokuInput.displacement - 1);
         let lastIchi = reverseIndex(myIchi);
         let lagIchi = reverseIndex(myIchi, params.ichimokuInput.displacement - 1);
@@ -125,24 +167,25 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         let longCond: boolean = entryOneCond && isCrossTKBull && isAboveKijun && isAboveTenkan && isAboveKumo && isChikuAboveAll && isFuturBright;
 
         let exitOneCond: boolean = params.exit.exitCrossTKBear || params.exit.exitPriceUnderTenkan || params.exit.exitPriceUnderKijun || params.exit.exitPriceUnderKumo || params.exit.exitChikuUnderSmthg || params.exit.exitFuturDark;
-        let exitCond: boolean = exitOneCond && exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderSmthg && exitIsFuturDark;
+        let exitCond: boolean = exitOneCond && (exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderSmthg && exitIsFuturDark);
+        let stoploss: number = params.exit.useStopLoss ? lastCandle.close * (1 - params.exit.stopPerc / 100) : 0;
 
         let currentTrade: Trade | undefined =
-            longCond && !trade ? {
+            params.misc.long && longCond ? {
                 entryType: EntryType.ENTRY,
                 type: TradeTypes.LONG,
-                price: reverseIndex(candles, 1).close,
-                stoploss: 0,
+                price: lastCandle.close,
+                stoploss: trade && trade.stoploss > 0 ? trade.stoploss : stoploss,
                 asset: assetDetail,
                 timeframe: assetTimeFrame,
-            } : exitCond && trade ? {
+            } : (exitCond || (trade && lastCandle.close < trade.stoploss)) && trade?.entryType == EntryType.ENTRY ? {
                 entryType: EntryType.EXIT,
                 type: TradeTypes.LONG,
-                price: reverseIndex(candles, 1).close,
+                price: lastCandle.close < trade.stoploss ? trade.stoploss - 1 : lastCandle.close,
                 stoploss: 0,
                 asset: assetDetail,
                 timeframe: assetTimeFrame,
-            } : undefined
+            } : undefined;
 
         return currentTrade ? currentTrade : {
             entryType: EntryType.NOTHING,
