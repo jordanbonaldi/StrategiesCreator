@@ -72,7 +72,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 warmup: 120,
                 equity: 1000,
                 riskType: RiskType.PERCENT,
-                riskInTrade: 90
+                riskInTrade: 10
             });
     }
 
@@ -86,11 +86,10 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
     }
 
     backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, backtestParams: BacktestParams, params: IchimokuLongInput): StrategyResult {
-        let strategyResult: StrategyResult = { total: 0, win: 0, lost: 0, equityPercent: 100, maxDrowDown: 0, riskRewardRatio: 0, tradeResults: [] };
-        let currentTrade: Trade | undefined = undefined;
-        let lastTrade: Trade | undefined = undefined;
+        let strategyResult: StrategyResult = { total: 0, win: 0, lost: 0, equityPercent: 100, maxDrowDown: 0, maxLosingStreak: 0, riskRewardRatio: 0, tradeResults: [] };
         let tradeResult: TradeResult;
-        let currentEquity: number = backtestParams.equity;
+        let currentTrade: Trade | undefined = undefined, lastTrade = undefined;
+        let currentEquity: number = backtestParams.equity, losingstreak = 0, saveEquity = backtestParams.equity, drowDown = 0;
 
         for (let a = backtestParams.warmup; a < candles.length; a++) {
             currentTrade = this.algorithm(candles.slice(0, a), assetDetail, assetTimeFrame, currentTrade, params);
@@ -100,21 +99,30 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             if (currentTrade.entryType == EntryType.EXIT && lastTrade) {
                 tradeResult = this.tradeResultCalc(lastTrade, currentTrade);
                 if (backtestParams.riskType == RiskType.PERCENT) {
-                    console.log("price %: " + tradeResult.pricePercent.toFixed(2));
                     currentEquity += (backtestParams.riskInTrade / 100 * currentEquity) / 100 * tradeResult.pricePercent;
                 } else {
                     currentEquity += backtestParams.riskInTrade * (1 + tradeResult.pricePercent / 100);
                 }
-                console.log("current equity: " + currentEquity.toFixed(2));
                 tradeResult.tradeStatus == TradeStatus.WIN ? strategyResult.win++ : strategyResult.lost++;
                 strategyResult.equityPercent = (currentEquity - backtestParams.equity) / backtestParams.equity * 100;
                 strategyResult.total++;
+                if (tradeResult.tradeStatus == TradeStatus.LOST && (strategyResult.tradeResults.length == 0 || (strategyResult.tradeResults.length > 0 && strategyResult.tradeResults[strategyResult.tradeResults.length - 1].tradeStatus == TradeStatus.LOST))) {
+                    losingstreak++;
+                }
+                else if (tradeResult.tradeStatus == TradeStatus.WIN) {
+                    drowDown = (saveEquity - currentEquity) / saveEquity * 100;
+                    strategyResult.maxLosingStreak = losingstreak > strategyResult.maxLosingStreak ? losingstreak : strategyResult.maxLosingStreak;
+                    strategyResult.maxDrowDown = drowDown > 0 && drowDown > strategyResult.maxDrowDown ? drowDown : strategyResult.maxDrowDown;
+                    losingstreak = 0;
+                    drowDown = 0;
+                    saveEquity = currentEquity;
+                }
                 strategyResult.tradeResults.push(tradeResult);
+                console.log(currentEquity)
                 lastTrade = undefined;
             }
             currentTrade = lastTrade;
         }
-
         return strategyResult;
     }
 
@@ -181,7 +189,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             } : (exitCond || (trade && lastCandle.close < trade.stoploss)) && trade?.entryType == EntryType.ENTRY ? {
                 entryType: EntryType.EXIT,
                 type: TradeTypes.LONG,
-                price: lastCandle.close < trade.stoploss ? trade.stoploss - 1 : lastCandle.close,
+                price: lastCandle.close < trade.stoploss ? trade.stoploss : lastCandle.close,
                 stoploss: 0,
                 asset: assetDetail,
                 timeframe: assetTimeFrame,
