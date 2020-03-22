@@ -1,5 +1,5 @@
 import Strategy, { StrategyParams } from "./Strategy";
-import { EntryType, reverseIndex, ichimokucloud, Trade, TradeTypes } from "@jordanbonaldi/indicatorsapi";
+import { EntryType, reverseIndex, ichimokucloud, Trade, TradeTypes, IchimokuCloud } from "@jordanbonaldi/indicatorsapi";
 import { CandleModel } from "@jordanbonaldi/binancefetcher";
 import StrategyResult from "./StrategyResult";
 import TradeResult, { TradeStatus } from "./TradeResult";
@@ -61,7 +61,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 exitChikuUnderSmthg: false,
                 exitFuturDark: false,
                 useStopLoss: true,
-                stopPerc: 10
+                stopPerc: 1
             },
             misc: {
                 long: true,
@@ -86,7 +86,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
     }
 
     backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, backtestParams: BacktestParams, params: IchimokuLongInput): StrategyResult {
-        let strategyResult: StrategyResult = { total: 0, win: 0, lost: 0, equityPercent: 100, maxDrowDown: 0, maxLosingStreak: 0, riskRewardRatio: 0, tradeResults: [] };
+        let strategyResult: StrategyResult = { total: 0, win: 0, lost: 0, equityPercent: 100, maxDrowDown: 0, maxLosingStreak: 0, tradeResults: [] };
         let tradeResult: TradeResult;
         let currentTrade: Trade | undefined = undefined, lastTrade = undefined;
         let currentEquity: number = backtestParams.equity, losingstreak = 0, saveEquity = backtestParams.equity, drowDown = 0;

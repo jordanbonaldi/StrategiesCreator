@@ -7,6 +7,6 @@ export default interface StrategyResult {
     equityPercent: number,
     maxDrowDown: number,
     maxLosingStreak: number,
-    riskRewardRatio: number,
     tradeResults: TradeResult[],
+    riskRewardRatio?: number,
 }
