@@ -1,6 +1,6 @@
 {
   "name": "@jordanbonaldi/strategiescreator",
-  "version": "1.0.13",
+  "version": "1.0.0",
   "description": "",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
