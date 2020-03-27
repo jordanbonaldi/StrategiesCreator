@@ -1,7 +1,7 @@
 import { Trade } from "@jordanbonaldi/indicatorsapi"
 
 export enum TradeStatus {
-    WIN = 'Win', LOST = 'Lost', BREAKEVEN = 'Break Even'
+    WIN = 'Win', LOST = 'Lost', BREAK_EVEN = 'Break Even'
 }
 export default interface TradeResult {
     entryTrade: Trade,

@@ -1,5 +1,4 @@
-import XmaRsiStrategy from "../src/algorithms/XmaRsiStrategy";
-import IchimokuLongStrategy from "../src/algorithms/IchimokuLongStrategy";
+import IchimokuLongStrategy from "../src/strategies/IchimokuLongStrategy";
 
 export default {
     strategies: [

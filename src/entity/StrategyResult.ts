@@ -5,8 +5,10 @@ export default interface StrategyResult {
     win: number,
     lost: number,
     equityPercent: number,
-    maxDrowDown: number,
+    maxDrawDown: number,
     maxLosingStreak: number,
     tradeResults: TradeResult[],
     riskRewardRatio?: number,
+    asset: string,
+    timeframe: string | string[]
 }

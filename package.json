@@ -1,9 +1,9 @@
 {
-  "name": "@jordanbonaldi/templatealgorithm",
-  "version": "1.0.7",
+  "name": "@jordanbonaldi/strategiescreator",
+  "version": "1.0.10",
   "description": "",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "directories": {
     "lib": "lib"
   },
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jordanbonaldi/TemplateAlgorithm.git"
+    "url": "git+https://github.com/jordanbonaldi/StrategiesCreator.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -24,20 +24,19 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/jordanbonaldi/TemplateAlgorithm/issues"
+    "url": "https://github.com/jordanbonaldi/StrategiesCreator/issues"
   },
   "devDependencies": {
-    "@types/node": "^13.9.2",
+    "@types/node": "^13.9.5",
     "@types/uuid": "^7.0.2",
     "nodemon": "^2.0.2",
     "rimraf": "^3.0.2",
     "ts-node": "^8.8.0",
     "typescript": "^3.8.3"
   },
-  "homepage": "https://github.com/jordanbonaldi/TemplateAlgorithm#readme",
+  "homepage": "https://github.com/jordanbonaldi/StrategiesCreator#readme",
   "dependencies": {
-    "@jordanbonaldi/binancefetcher": "^1.1.13",
-    "@jordanbonaldi/indicatorsapi": "latest",
-    "tulind": "^0.8.18"
+    "@jordanbonaldi/binancefetcher": "^1.1.16",
+    "@jordanbonaldi/indicatorsapi": "0.0.17"
   }
 }

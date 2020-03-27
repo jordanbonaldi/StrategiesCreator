@@ -1,9 +1,9 @@
 import binanceAPI, { BinanceAPI, CandleChartResult, CandleModel } from "@jordanbonaldi/binancefetcher";
 import { Trade } from "@jordanbonaldi/indicatorsapi";
 import StrategyHandler from "../handlers/StrategyHandler";
-import Strategy, { StrategyParams } from "../algorithms/Strategy";
+import Strategy, { StrategyParams } from "../strategies/Strategy";
 import Config from "../../config/Config";
-import StrategyResult from "../algorithms/StrategyResult";
+import StrategyResult from "../entity/StrategyResult";
 
 export interface BinanceProperties {
     asset: string,

@@ -1,6 +1,8 @@
-import Strategy, { StrategyParams } from "./Strategy";
-import { Alma, EntryType, reverseIndex, rsi, sma, Trade, TradeTypes } from "@jordanbonaldi/indicatorsapi";
-import { CandleChartResult, CandleModel } from "@jordanbonaldi/binancefetcher";
+import Strategy, {StrategyParams} from "./Strategy";
+import {Alma, EntryType, reverseIndex, rsi, sma, Trade, TradeTypes} from "@jordanbonaldi/indicatorsapi";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
+import BacktestParams, {RiskType} from "../entity/BacktestParams";
+import StrategyResult from "../entity/StrategyResult";
 
 export interface XmaRsiInput extends StrategyParams {
     xmaPeriod: number,
@@ -18,12 +20,16 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             xmaRsiPeriod: 21,
             rsiPeriod: 14,
             stopLoss: 3.5
+        }, {
+            equity: 0, riskInTrade: 0, riskType: RiskType.FIXEDAMOUNT, warmup: 0
         });
     }
 
-    backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, backtestParams: BacktestParams, params: XmaRsiInput): Trade[] {
-        return []
-    }
+    backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, backtestParams: BacktestParams, params: & StrategyParams): StrategyResult {
+        return {
+            equityPercent: 0, lost: 0, maxDrowDown: 0, maxLosingStreak: 0, total: 0, tradeResults: [], win: 0
+        }
+    };
 
     /**
      *

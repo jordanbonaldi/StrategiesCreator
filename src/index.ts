@@ -1,12 +1,12 @@
-import BinanceAlgorithmTests from "./tests/BinanceAlgorithmTests";
-import {Trade} from "@jordanbonaldi/indicatorsapi";
-import StrategyResult from "./algorithms/StrategyResult";
+import Config from "../config/Config";
+import Strategy from "./strategies/Strategy";
+import StrategyHandler from "./handlers/StrategyHandler";
 
-BinanceAlgorithmTests.connect()
-    .then(instance => instance.runBacktestOnAsset('IchimokuLongStrategy', {
-        asset: 'BTCUSDT',
-        timeframe: '1d'
-    }))
-    .then((trades: StrategyResult | Error) => console.log(trades))
-;
+let strategies: Strategy<any>[] = Config.strategies;
 
+export default StrategyHandler;
+
+export {
+    strategies,
+    Strategy as Strategy,
+}

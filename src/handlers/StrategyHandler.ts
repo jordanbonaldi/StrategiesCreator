@@ -1,4 +1,4 @@
-import Strategy, {StrategyParams} from "../algorithms/Strategy";
+import Strategy, {StrategyParams} from "../strategies/Strategy";
 
 export default new class StrategyHandler {
 
@@ -8,7 +8,7 @@ export default new class StrategyHandler {
      *
      * @param strategy
      */
-    add(strategy: Strategy< & StrategyParams >): void {
+    add(strategy: Strategy<any & StrategyParams>): void {
        this.strategy.push(strategy);
     }
 
@@ -24,5 +24,8 @@ export default new class StrategyHandler {
         return this.strategy;
     }
 
+    getStrategiesNames(): string[] {
+        return this.strategy.map((strategy: Strategy<any>) => strategy.name);
+    }
 
 }
