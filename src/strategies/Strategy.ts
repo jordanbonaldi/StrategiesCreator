@@ -1,9 +1,10 @@
 import { CandleModel } from "@jordanbonaldi/binancefetcher";
-import {EntryType, Trade} from "@jordanbonaldi/indicatorsapi";
 import StrategyHandler from "../handlers/StrategyHandler";
 import StrategyResult from "../entity/StrategyResult";
 import BackTestParams, {RiskType} from "../entity/BacktestParams";
 import TradeResult, {TradeStatus} from "../entity/TradeResult";
+import Trade from "../entity/Trade";
+import { EntryType } from "../entity/TradeTypes";
 
 export interface StrategyParams {
     asset: string;
@@ -46,7 +47,11 @@ export default abstract class Strategy<T> {
         };
     }
 
-    tryStrategy(candles: CandleModel[], backTestParams: BackTestParams, params: T & StrategyParams): StrategyResult {
+    tryStrategy(
+        candles: CandleModel[],
+        backTestParams: BackTestParams = this.backTestParams,
+        params: T & StrategyParams = this.defaultParams
+    ): StrategyResult {
         let strategyResult: StrategyResult = {
             total: 0,
             win: 0,

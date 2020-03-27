@@ -1,5 +1,4 @@
 import BinanceAlgorithmTests from "./tests/BinanceStrategiesTests";
-import {Trade} from "@jordanbonaldi/indicatorsapi";
 import StrategyResult from "./entity/StrategyResult";
 
 BinanceAlgorithmTests.connect()

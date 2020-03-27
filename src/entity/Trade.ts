@@ -1,9 +1,9 @@
 import {EntryType, TradeTypes} from "./TradeTypes";
 
-export default interface DissociatePotentialTrade {
+export default interface Trade {
     entryType: EntryType,
-    entry: number,
-    stop: number,
+    price: number,
+    stoploss: number,
     type: TradeTypes,
     asset: string,
     timeframe: string,

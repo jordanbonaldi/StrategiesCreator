@@ -1,6 +1,6 @@
 {
   "name": "@jordanbonaldi/strategiescreator",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -37,6 +37,6 @@
   "homepage": "https://github.com/jordanbonaldi/StrategiesCreator#readme",
   "dependencies": {
     "@jordanbonaldi/binancefetcher": "^1.1.16",
-    "@jordanbonaldi/indicatorsapi": "0.0.17"
+    "@jordanbonaldi/indicatorsapi": "latest"
   }
 }

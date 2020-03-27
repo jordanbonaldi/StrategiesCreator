@@ -1,47 +1,35 @@
 import Strategy, {StrategyParams} from "./Strategy";
-import {Alma, EntryType, reverseIndex, rsi, sma, Trade, TradeTypes} from "@jordanbonaldi/indicatorsapi";
+import {Alma, reverseIndex, rsi, sma} from "@jordanbonaldi/indicatorsapi";
 import {CandleModel} from "@jordanbonaldi/binancefetcher";
-import BacktestParams, {RiskType} from "../entity/BacktestParams";
-import StrategyResult from "../entity/StrategyResult";
+import {RiskType} from "../entity/BacktestParams";
+import Trade from "../entity/Trade";
+import {EntryType, TradeTypes} from "../entity/TradeTypes";
 
-export interface XmaRsiInput extends StrategyParams {
-    xmaPeriod: number,
-    xmaRsiPeriod: number,
-    rsiPeriod: number,
-    stopLoss: number
+export class XmaRsiInput implements StrategyParams {
+    asset = 'BTCUSDT';
+    timeframe =  '1h';
+    xmaPeriod = 21;
+    xmaRsiPeriod = 21;
+    rsiPeriod = 14;
+    stopLoss =  3.5;
 }
 
 export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
-
-
     constructor() {
-        super('XmaRsiStrategy', {
-            xmaPeriod: 21,
-            xmaRsiPeriod: 21,
-            rsiPeriod: 14,
-            stopLoss: 3.5
-        }, {
-            equity: 0, riskInTrade: 0, riskType: RiskType.FIXEDAMOUNT, warmup: 0
+        super('XmaRsiStrategy', new XmaRsiInput(), {
+            equity: 0, riskInTrade: 0, riskType: RiskType.FIXED_AMOUNT, warm_up: 0
         });
     }
-
-    backtest(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, backtestParams: BacktestParams, params: & StrategyParams): StrategyResult {
-        return {
-            equityPercent: 0, lost: 0, maxDrowDown: 0, maxLosingStreak: 0, total: 0, tradeResults: [], win: 0
-        }
-    };
 
     /**
      *
      * @param candles Candle Model of type Candle
-     * @param assetDetail Assets name
-     * @param assetTimeFrame TimeFrame Used
      *
      * Copy paste the code below inside brackets
      * @param trade possible current trade
      * @param params params taken
      */
-    algorithm(candles: CandleModel[], assetDetail: string, assetTimeFrame: string, trade: Trade | undefined, params: XmaRsiInput): Trade {
+    launchStrategy(candles: CandleModel[], trade: Trade | undefined, params: XmaRsiInput & StrategyParams): Trade {
         let printDebug: Function = (): void => {
             console.log(`Candles length: ${candles.length}`);
             console.log("candles: " + candles.map(c => c.close)[998]);
@@ -69,23 +57,23 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                 type: TradeTypes.LONG,
                 price: reverseIndex(candles, 1).close,
                 stoploss: reverseIndex(candles, 1).close * (1 - params.stopLoss / 100),
-                asset: assetDetail,
-                timeframe: assetTimeFrame,
+                asset: this.defaultParams.asset,
+                timeframe: this.defaultParams.timeframe,
             } : !isXmaBull && !isXmaRsiBull ?
                 {
                     entryType: EntryType.ENTRY,
                     type: TradeTypes.SHORT,
                     price: reverseIndex(candles, 1).close,
                     stoploss: reverseIndex(candles, 1).close * (1 + params.stopLoss / 100),
-                    asset: assetDetail,
-                    timeframe: assetTimeFrame,
+                    asset: this.defaultParams.asset,
+                    timeframe: this.defaultParams.timeframe,
                 } : {
                     entryType: EntryType.NOTHING,
                     type: TradeTypes.LONG,
                     price: 0,
                     stoploss: 0,
-                    asset: assetDetail,
-                    timeframe: assetTimeFrame,
+                    asset: this.defaultParams.asset,
+                    timeframe: this.defaultParams.timeframe,
                 };
     }
 }
