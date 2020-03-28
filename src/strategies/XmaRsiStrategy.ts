@@ -8,9 +8,11 @@ import { EntryType, TradeTypes } from "../entity/TradeTypes";
 export class XmaRsiInput implements StrategyParams {
     asset = 'BTCUSDT';
     timeframe = '1h';
-    xmaPeriod = 21;
-    xmaRsiPeriod = 21;
-    rsiPeriod = 14;
+    data = {
+        xmaPeriod: 21,
+        xmaRsiPeriod: 21,
+        rsiPeriod: 14,
+    };
     exit = {
         useStopLoss: true,
         stopPerc: 3.5
@@ -45,15 +47,15 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
 
         let xmaCandles = candles.map(c => c.close).slice(0, -1);
         let rsiCandles = candles.map(c => c.close).slice(0, -1);
-        let myXma: number[] = Alma({ period: params.xmaPeriod, values: xmaCandles, offset: 0.5, sigma: 6 });
-        let myRsi = rsi({ period: params.rsiPeriod, values: rsiCandles });
-        let myXmaRsi = sma({ period: params.xmaRsiPeriod, values: myRsi });
+        let myXma: number[] = Alma({ period: params.data.xmaPeriod, values: xmaCandles, offset: 0.5, sigma: 6 });
+        let myRsi = rsi({ period: params.data.rsiPeriod, values: rsiCandles });
+        let myXmaRsi = sma({ period: params.data.xmaRsiPeriod, values: myRsi });
         //printDebug();
 
         let isXmaBull = reverseIndex(myXma) > reverseIndex(myXma, 1);
         let isXmaRsiBull = reverseIndex(myXmaRsi) > reverseIndex(myXmaRsi, 1);
 
-        let longCond = isXmaBull && isXmaRsiBull
+        let longCond = isXmaBull && isXmaRsiBull;
         let stoploss: number = params.exit.useStopLoss ? lastCandle.close * (1 - params.exit.stopPerc / 100) : 0;
 
         let currentTrade: Trade | undefined =
