@@ -9,9 +9,9 @@ export class XmaRsiInput implements StrategyParams {
     asset = 'BTCUSDT';
     timeframe = '1h';
     data = {
-        xmaPeriod: 21,
-        xmaRsiPeriod: 21,
-        rsiPeriod: 14,
+        xmaPeriod: 350,
+        xmaRsiPeriod: 350,
+        rsiPeriod: 250,
     };
     exit = {
         useStopLoss: true,
@@ -24,6 +24,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
         super('XmaRsiStrategy', new XmaRsiInput(), {
             equity: 100, riskInTrade: 90, riskType: RiskType.FIXED_AMOUNT, warm_up: 70
         });
+        this.backTestParams.warm_up = this.defaultParams.data.xmaPeriod > this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod ? this.defaultParams.data.xmaPeriod : this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod;
     }
 
     /**
