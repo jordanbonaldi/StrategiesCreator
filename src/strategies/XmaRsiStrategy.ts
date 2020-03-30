@@ -1,13 +1,13 @@
-import Strategy, { StrategyParams } from "./Strategy";
-import { Alma, reverseIndex, rsi, sma } from "@jordanbonaldi/indicatorsapi";
-import { CandleModel } from "@jordanbonaldi/binancefetcher";
-import { RiskType } from "../entity/BacktestParams";
+import Strategy, {StrategyParams} from "./Strategy";
+import {Alma, reverseIndex, rsi, sma} from "@jordanbonaldi/indicatorsapi";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
+import {RiskType} from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import {EntryType, TradeTypes} from "../entity/TradeTypes";
 
 export class XmaRsiInput implements StrategyParams {
     asset = 'BTCUSDT';
-    timeframe = '1h';
+    timeframe = ['1h'];
     data = {
         xmaPeriod: 350,
         xmaRsiPeriod: 350,
@@ -24,6 +24,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
         super('XmaRsiStrategy', new XmaRsiInput(), {
             equity: 100, riskInTrade: 90, riskType: RiskType.FIXED_AMOUNT, warm_up: 70
         });
+
         this.backTestParams.warm_up = this.defaultParams.data.xmaPeriod > this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod ? this.defaultParams.data.xmaPeriod : this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod;
     }
 
@@ -33,9 +34,10 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
      *
      * Copy paste the code below inside brackets
      * @param trade possible current trade
+     * @param timeFrame
      * @param params params taken
      */
-    launchStrategy(candles: CandleModel[], trade: Trade | undefined, params: XmaRsiInput & StrategyParams): Trade {
+    launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: XmaRsiInput & StrategyParams): Trade {
         let printDebug: Function = (): void => {
             console.log(`Candles length: ${candles.length}`);
             console.log("candles: " + candles.map(c => c.close)[998]);
@@ -66,14 +68,14 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                 price: lastCandle.close,
                 stoploss: trade && trade.stoploss > 0 ? trade.stoploss : stoploss,
                 asset: this.defaultParams.asset,
-                timeframe: this.defaultParams.timeframe,
+                timeframe: timeFrame,
             } : (!longCond && trade || (trade && lastCandle.close < trade.stoploss)) && trade?.entryType == EntryType.ENTRY ? {
                 entryType: EntryType.EXIT,
                 type: TradeTypes.LONG,
                 price: lastCandle.close < trade.stoploss ? trade.stoploss : lastCandle.close,
                 stoploss: 0,
                 asset: this.defaultParams.asset,
-                timeframe: this.defaultParams.timeframe,
+                timeframe: timeFrame,
             } : undefined;
 
         return currentTrade ? currentTrade : {
@@ -82,7 +84,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             price: 0,
             stoploss: 0,
             asset: this.defaultParams.asset,
-            timeframe: this.defaultParams.timeframe,
+            timeframe: timeFrame,
 
         }
     }

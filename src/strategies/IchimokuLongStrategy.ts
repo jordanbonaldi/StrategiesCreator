@@ -7,7 +7,7 @@ import { EntryType, TradeTypes } from "../entity/TradeTypes";
 
 export class IchimokuLongInput implements StrategyParams {
     asset = 'BTCUSDT';
-    timeframe = '1h';
+    timeframe = ['1h'];
     ichimokuInput = {
         conversionPeriod: 9,
         basePeriod: 26,
@@ -56,9 +56,10 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
      *
      * Copy paste the code below inside brackets
      * @param trade possible current trade
+     * @param timeFrame
      * @param params params taken
      */
-    launchStrategy(candles: CandleModel[], trade: Trade | undefined, params: IchimokuLongInput): Trade {
+    launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: IchimokuLongInput): Trade {
 
         let printDebug: Function = (): void => {
             console.log(reverseIndex(candles, 1));
@@ -107,14 +108,14 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 price: lastCandle.close,
                 stoploss: trade && trade.stoploss > 0 ? trade.stoploss : stoploss,
                 asset: this.defaultParams.asset,
-                timeframe: this.defaultParams.timeframe,
+                timeframe: timeFrame,
             } : (exitCond || (trade && lastCandle.close < trade.stoploss)) && trade?.entryType == EntryType.ENTRY ? {
                 entryType: EntryType.EXIT,
                 type: TradeTypes.LONG,
                 price: lastCandle.close < trade.stoploss ? trade.stoploss : lastCandle.close,
                 stoploss: 0,
                 asset: this.defaultParams.asset,
-                timeframe: this.defaultParams.timeframe,
+                timeframe: timeFrame,
             } : undefined;
 
         return currentTrade ? currentTrade : {
@@ -123,7 +124,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             price: 0,
             stoploss: 0,
             asset: this.defaultParams.asset,
-            timeframe: this.defaultParams.timeframe,
+            timeframe: timeFrame,
         };
     }
 }

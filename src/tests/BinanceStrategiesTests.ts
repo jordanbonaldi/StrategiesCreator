@@ -35,7 +35,7 @@ export default new class BinanceAlgorithmTests {
                 this.binanceAPI.getCandles(symbol, timeFrame)
                     .then((candleResults: CandleModel[]) =>
                         trades.push(...StrategyHandler.getAll().map(
-                            (strategy: Strategy<& StrategyParams>) => strategy.launchBootstrapStrategy(candleResults)
+                            (strategy: Strategy<& StrategyParams>) => strategy.launchBootstrapStrategy(candleResults, timeFrame)
                         ))
                     )
             )).then(() => trades)
@@ -49,7 +49,7 @@ export default new class BinanceAlgorithmTests {
     runAllOnAsset(properties: BinanceProperties): Promise<Trade[]> {
         return Promise.all(StrategyHandler.getAll().map((strategy: Strategy<& StrategyParams>) => this.binanceAPI.getCandles(
             properties.asset, properties.timeframe
-        ).then((candles: CandleModel[]) => strategy.launchBootstrapStrategy(candles))));
+        ).then((candles: CandleModel[]) => strategy.launchBootstrapStrategy(candles, properties.timeframe))));
     }
 
     /**
@@ -67,7 +67,7 @@ export default new class BinanceAlgorithmTests {
                         let foundStrategy: Strategy<& StrategyParams> | undefined = StrategyHandler.getStrategyByName(strategy);
                         if (foundStrategy == null) return Error('Strategy not found');
 
-                        trades.push(foundStrategy.launchBootstrapStrategy(candleResults))
+                        trades.push(foundStrategy.launchBootstrapStrategy(candleResults, timeFrame))
                     })
             )
             ).then(() => trades)
@@ -85,7 +85,7 @@ export default new class BinanceAlgorithmTests {
                 let foundStrategy: Strategy<& StrategyParams> | undefined = StrategyHandler.getStrategyByName(strategy);
                 if (foundStrategy == null) return Error('Strategy not found');
 
-                return foundStrategy.launchBootstrapStrategy(candles)
+                return foundStrategy.launchBootstrapStrategy(candles, binanceProperties.timeframe)
             })
     }
 
@@ -100,7 +100,7 @@ export default new class BinanceAlgorithmTests {
                 let foundStrategy: Strategy<& StrategyParams> | undefined = StrategyHandler.getStrategyByName(strategy);
                 if (foundStrategy == null) return Error('Strategy not found');
 
-                return foundStrategy.tryStrategy(candles)
+                return foundStrategy.tryStrategy(candles, binanceProperties.timeframe)
             })
     }
 }

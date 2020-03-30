@@ -8,7 +8,7 @@ import { EntryType } from "../entity/TradeTypes";
 
 export interface StrategyParams {
     asset: string;
-    timeframe: string | string[];
+    timeframe: string[];
 }
 
 export default abstract class Strategy<T> {
@@ -30,13 +30,14 @@ export default abstract class Strategy<T> {
 
     launchBootstrapStrategy(
         candles: CandleModel[],
+        timeFrame: string,
         trade: Trade | undefined = undefined,
         params: T & StrategyParams = this.defaultParams,
     ): Trade {
-        return this.launchStrategy(candles, trade, params);
+        return this.launchStrategy(candles, trade, timeFrame, params);
     }
 
-    abstract launchStrategy(candles: CandleModel[], trade: Trade | undefined, params: T & StrategyParams): Trade;
+    abstract launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: T & StrategyParams): Trade;
 
     private tradeResultComputation(entryTrade: Trade, exitTrade: Trade): TradeResult {
         return {
@@ -49,6 +50,7 @@ export default abstract class Strategy<T> {
 
     tryStrategy(
         candles: CandleModel[],
+        timeFrame: string,
         backTestParams: BackTestParams = this.backTestParams,
         params: T & StrategyParams = this.defaultParams
     ): StrategyResult {
@@ -68,7 +70,7 @@ export default abstract class Strategy<T> {
         let currentEquity: number = backTestParams.equity, losingStreak = 0, saveEquity = backTestParams.equity, drawDown = 0;
 
         for (let a = backTestParams.warm_up; a < candles.length; a++) {
-            currentTrade = this.launchStrategy(candles.slice(0, a), currentTrade, params);
+            currentTrade = this.launchStrategy(candles.slice(0, a), currentTrade, timeFrame, params);
             if (currentTrade.entryType == EntryType.ENTRY && !lastTrade) {
                 lastTrade = currentTrade;
             }
