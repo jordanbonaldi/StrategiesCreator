@@ -7,7 +7,7 @@ import { EntryType, TradeTypes } from "../entity/TradeTypes";
 
 export class XmaRsiInput implements StrategyParams {
     asset = 'BTCUSDT';
-    timeframe = ['1h'];
+    timeframe = ['1d'];
     data = {
         xmaPeriod: 21,
         xmaRsiPeriod: 21,
