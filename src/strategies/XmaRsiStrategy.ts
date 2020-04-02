@@ -85,7 +85,6 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             stoploss: 0,
             asset: this.defaultParams.asset,
             timeframe: timeFrame,
-
         }
     }
 }

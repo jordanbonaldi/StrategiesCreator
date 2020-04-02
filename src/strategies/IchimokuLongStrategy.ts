@@ -102,11 +102,11 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         let stoploss: number = params.exit.useStopLoss ? lastCandle.close * (1 - params.exit.stopPerc / 100) : 0;
 
         let currentTrade: Trade | undefined =
-            params.misc.long && longCond ? {
+            params.misc.long && longCond && !trade ? {
                 entryType: EntryType.ENTRY,
                 type: TradeTypes.LONG,
                 price: lastCandle.close,
-                stoploss: trade && trade.stoploss > 0 ? trade.stoploss : stoploss,
+                stoploss: stoploss,
                 asset: this.defaultParams.asset,
                 timeframe: timeFrame,
             } : (exitCond || (trade && lastCandle.close < trade.stoploss)) && trade?.entryType == EntryType.ENTRY ? {
