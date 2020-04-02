@@ -1,8 +1,8 @@
 import { CandleModel } from "@jordanbonaldi/binancefetcher";
 import StrategyHandler from "../handlers/StrategyHandler";
 import StrategyResult from "../entity/StrategyResult";
-import BackTestParams, {RiskType} from "../entity/BacktestParams";
-import TradeResult, {TradeStatus} from "../entity/TradeResult";
+import BackTestParams, { RiskType } from "../entity/BacktestParams";
+import TradeResult, { TradeStatus } from "../entity/TradeResult";
 import Trade from "../entity/Trade";
 import { EntryType } from "../entity/TradeTypes";
 
