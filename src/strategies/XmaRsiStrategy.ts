@@ -1,28 +1,28 @@
-import Strategy, {StrategyParams} from "./Strategy";
-import {Alma, reverseIndex, rsi, sma} from "@jordanbonaldi/indicatorsapi";
-import {CandleModel} from "@jordanbonaldi/binancefetcher";
-import {RiskType} from "../entity/BacktestParams";
+import Strategy, { StrategyParams } from "./Strategy";
+import { Alma, reverseIndex, rsi, sma, Zlema } from "@jordanbonaldi/indicatorsapi";
+import { CandleModel } from "@jordanbonaldi/binancefetcher";
+import { RiskType } from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import {EntryType, TradeTypes} from "../entity/TradeTypes";
+import { EntryType, TradeTypes } from "../entity/TradeTypes";
 
 export class XmaRsiInput implements StrategyParams {
     asset = 'BTCUSDT';
     timeframe = ['1h'];
     data = {
-        xmaPeriod: 350,
-        xmaRsiPeriod: 350,
-        rsiPeriod: 250,
+        xmaPeriod: 21,
+        xmaRsiPeriod: 21,
+        rsiPeriod: 14,
     };
     exit = {
         useStopLoss: true,
-        stopPerc: 3.5
+        stopPerc: 2.5
     };
 }
 
 export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
     constructor() {
         super('XmaRsiStrategy', new XmaRsiInput(), {
-            equity: 100, riskInTrade: 90, riskType: RiskType.FIXED_AMOUNT, warm_up: 70
+            equity: 100, riskInTrade: 90, riskType: RiskType.PERCENT, warm_up: 70
         });
 
         this.backTestParams.warm_up = this.defaultParams.data.xmaPeriod > this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod ? this.defaultParams.data.xmaPeriod : this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod;
@@ -52,7 +52,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
         let rsiCandles = candles.map(c => c.close).slice(0, -1);
         let myXma: number[] = Alma({ period: params.data.xmaPeriod, values: xmaCandles, offset: 0.5, sigma: 6 });
         let myRsi = rsi({ period: params.data.rsiPeriod, values: rsiCandles });
-        let myXmaRsi = sma({ period: params.data.xmaRsiPeriod, values: myRsi });
+        let myXmaRsi = Zlema({ period: params.data.xmaRsiPeriod, values: myRsi });
         //printDebug();
 
         let isXmaBull = reverseIndex(myXma) > reverseIndex(myXma, 1);

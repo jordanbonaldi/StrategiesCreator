@@ -44,9 +44,9 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             new IchimokuLongInput(),
             {
                 warm_up: 120,
-                equity: 1000,
+                equity: 100,
                 riskType: RiskType.PERCENT,
-                riskInTrade: 10
+                riskInTrade: 90
             });
     }
 
