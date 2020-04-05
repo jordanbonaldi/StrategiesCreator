@@ -103,4 +103,19 @@ export default new class BinanceAlgorithmTests {
                 return foundStrategy.tryStrategy(candles, binanceProperties.timeframe)
             })
     }
+
+    /**
+     *
+     * @param strategy
+     * @param binanceProperties
+     * @param callback
+     */
+    runBackTestOnProductionAPIAsset(strategy: string, binanceProperties: BinanceProperties, callback: (strategyResult: StrategyResult) => void): void {
+        this.binanceAPI.socketWatcher(binanceProperties.asset, binanceProperties.timeframe, true, (candles: CandleModel[]) => {
+            let foundStrategy: Strategy<& StrategyParams> | undefined = StrategyHandler.getStrategyByName(strategy);
+            if (foundStrategy == null) return Error('Strategy not found');
+
+            callback(foundStrategy.tryStrategy(candles, binanceProperties.timeframe));
+        });
+    }
 }

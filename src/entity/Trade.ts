@@ -7,5 +7,6 @@ export default interface Trade {
     type: TradeTypes,
     asset: string,
     timeframe: string,
+    uuid ?: string,
     exit?: number,
 }
