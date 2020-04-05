@@ -104,77 +104,7 @@ export default abstract class Strategy<T> {
                 currentTrade = undefined;
             }
         }
-
         strategyResult.equityPercent = (currentEquity - backTestParams.equity) / backTestParams.equity * 100;
         return strategyResult;
     }
-
 }
-
-
-
-
-
-// tryStrategy(
-//     candles: CandleModel[],
-//     timeFrame: string,
-//     backTestParams: BackTestParams = this.backTestParams,
-//     params: T & StrategyParams = this.defaultParams
-// ): StrategyResult {
-//     let strategyResult: StrategyResult = {
-//         total: 0,
-//         totalLong: 0,
-//         totalShort: 0,
-//         win: 0,
-//         lost: 0,
-//         equityPercent: 100,
-//         maxDrawDown: 0,
-//         maxLosingStreak: 0,
-//         tradeResults: [],
-//         asset: this.defaultParams.asset,
-//         timeframe: this.defaultParams.timeframe
-//     };
-//     let tradeResult: TradeResult;
-//     let currentTrade: Trade | undefined = undefined, lastTrade = undefined;
-//     let currentEquity: number = backTestParams.equity, losingStreak = 0, saveEquity = backTestParams.equity, drawDown = 0;
-
-//     for (let a = backTestParams.warm_up; a < candles.length; a++) {
-//         currentTrade = this.launchStrategy(candles.slice(0, a), currentTrade, timeFrame, params);
-//         if (currentTrade.entryType == EntryType.ENTRY && !lastTrade) {
-//             lastTrade = currentTrade;
-//         }
-//         if (currentTrade.entryType == EntryType.EXIT && lastTrade) {
-//             tradeResult = this.tradeResultComputation(lastTrade, currentTrade);
-//             // console.log(tradeResult)
-//             console.log()
-//             console.log()
-//             console.log()
-//             if (backTestParams.riskType == RiskType.PERCENT) {
-//                 currentEquity += (backTestParams.riskInTrade / 100 * currentEquity) / 100 * (lastTrade.type === TradeTypes.LONG ? tradeResult.pricePercent : -tradeResult.pricePercent);
-//             } else {
-//                 currentEquity += backTestParams.riskInTrade * (1 + tradeResult.pricePercent / 100);
-//             }
-//             tradeResult.tradeStatus == TradeStatus.WIN ? strategyResult.win++ : strategyResult.lost++;
-//             strategyResult.equityPercent = (currentEquity - backTestParams.equity) / backTestParams.equity * 100;
-//             strategyResult.total++;
-//             lastTrade.type === TradeTypes.LONG ? strategyResult.totalLong++ : strategyResult.totalShort++
-//             if (tradeResult.tradeStatus == TradeStatus.LOST && (strategyResult.tradeResults.length == 0 || (strategyResult.tradeResults.length > 0 && strategyResult.tradeResults[strategyResult.tradeResults.length - 1].tradeStatus == TradeStatus.LOST))) {
-//                 losingStreak++;
-//             }
-//             else if (tradeResult.tradeStatus == TradeStatus.WIN) {
-//                 drawDown = (saveEquity - currentEquity) / saveEquity * 100;
-//                 strategyResult.maxLosingStreak = losingStreak > strategyResult.maxLosingStreak ? losingStreak : strategyResult.maxLosingStreak;
-//                 strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
-//                 losingStreak = 0;
-//                 drawDown = 0;
-//                 saveEquity = currentEquity;
-//             }
-//             strategyResult.tradeResults.push(tradeResult);
-//             lastTrade = undefined;
-//         }
-//         currentTrade = lastTrade;
-//     }
-
-//     strategyResult.tradeResults = []
-//     return strategyResult;
-// }
