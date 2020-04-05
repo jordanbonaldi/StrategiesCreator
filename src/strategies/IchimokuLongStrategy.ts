@@ -36,7 +36,7 @@ export class IchimokuLongInput implements StrategyParams {
         exitChikuUnderKijun: false,
         exitChikuUnderKumo: false,
         exitFuturDark: true,
-        useStopLoss: true,
+        useStopLoss: false,
         stopPerc: 10
     };
     misc = {
@@ -128,7 +128,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
-                trade.stoploss > liveCandle.close ? { //lastCandle.low
+                params.exit.useStopLoss && trade.stoploss > liveCandle.close ? { //lastCandle.low
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
                     price: liveCandle.close, //trade.stoploss
