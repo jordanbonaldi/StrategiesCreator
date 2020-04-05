@@ -1,14 +1,15 @@
-import Strategy, { StrategyParams } from "./Strategy";
-import { Alma, reverseIndex, rsi, ema, Zlema } from "@jordanbonaldi/indicatorsapi";
-import { CandleModel } from "@jordanbonaldi/binancefetcher";
-import { RiskType } from "../entity/BacktestParams";
+import Strategy, {StrategyParams} from "./Strategy";
+import {Alma, ema, reverseIndex, rsi, Zlema} from "@jordanbonaldi/indicatorsapi";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
+import {RiskType} from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import { EntryType, TradeTypes } from "../entity/TradeTypes";
-import { ExitTypes } from "../entity/ExitTypes";
+import {EntryType, TradeTypes} from "../entity/TradeTypes";
+import {ExitTypes} from "../entity/ExitTypes";
 
 export class XmaRsiInput implements StrategyParams {
-    asset = 'BTCUSDT';
-    timeframe = ['1d'];
+
+    asset: string = 'BTCUSDT';
+    timeframe: string[] = ['1d'];
     data = {
         xmaPeriod: 21,
         xmaRsiPeriod: 21,
@@ -20,6 +21,7 @@ export class XmaRsiInput implements StrategyParams {
         useStopLoss: false,
         stopPerc: 2.5
     };
+
 }
 
 export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
@@ -86,7 +88,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                 price: lastCandle.close,
                 stoploss: stopLossLong,
                 exitType: ExitTypes.PROFIT,
-                asset: this.defaultParams.asset,
+                asset: params.asset,
                 timeframe: timeFrame,
             } : shortCond ? {
                 entryType: EntryType.ENTRY,
@@ -94,7 +96,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                 price: lastCandle.close,
                 stoploss: stopLossShort,
                 exitType: ExitTypes.PROFIT,
-                asset: this.defaultParams.asset,
+                asset: params.asset,
                 timeframe: timeFrame,
             } : undefined;
         else
@@ -105,7 +107,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     price: liveCandle.close, //trade.stoploss
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
-                    asset: this.defaultParams.asset,
+                    asset: params.asset,
                     timeframe: timeFrame,
                 } : !longCond ? {
                     entryType: EntryType.EXIT,
@@ -113,7 +115,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     price: lastCandle.close,
                     stoploss: 0,
                     exitType: ExitTypes.PROFIT,
-                    asset: this.defaultParams.asset,
+                    asset: params.asset,
                     timeframe: timeFrame,
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
@@ -123,7 +125,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     price: liveCandle.close, //trade.stoploss
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
-                    asset: this.defaultParams.asset,
+                    asset: params.asset,
                     timeframe: timeFrame,
                 } : !shortCond ? {
                     entryType: EntryType.EXIT,
@@ -131,7 +133,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     price: lastCandle.close,
                     stoploss: 0,
                     exitType: ExitTypes.PROFIT,
-                    asset: this.defaultParams.asset,
+                    asset: params.asset,
                     timeframe: timeFrame,
                 } : undefined
             ) : undefined;
@@ -142,7 +144,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             price: 0,
             stoploss: 0,
             exitType: ExitTypes.PROFIT,
-            asset: this.defaultParams.asset,
+            asset: params.asset,
             timeframe: timeFrame,
         }
     }

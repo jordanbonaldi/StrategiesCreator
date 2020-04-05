@@ -1,10 +1,10 @@
-import Strategy, { StrategyParams } from "./Strategy";
-import { reverseIndex, ichimokucloud } from "@jordanbonaldi/indicatorsapi";
-import { CandleModel } from "@jordanbonaldi/binancefetcher";
-import { RiskType } from "../entity/BacktestParams";
+import Strategy, {StrategyParams} from "./Strategy";
+import {ichimokucloud, reverseIndex} from "@jordanbonaldi/indicatorsapi";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
+import {RiskType} from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import { EntryType, TradeTypes } from "../entity/TradeTypes";
-import { ExitTypes } from "../entity/ExitTypes";
+import {EntryType, TradeTypes} from "../entity/TradeTypes";
+import {ExitTypes} from "../entity/ExitTypes";
 
 export class IchimokuLongInput implements StrategyParams {
     asset = 'BTCUSDT';
