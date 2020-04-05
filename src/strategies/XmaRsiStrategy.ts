@@ -59,6 +59,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             console.log("xMA RSI: " + myXmaRsi.slice(myXmaRsi.length - 4, 999));
         };
         let lastCandle: CandleModel = reverseIndex(candles, 1);
+        let liveCandle: CandleModel = reverseIndex(candles);
 
         let xmaCandles = candles.map(c => c.close).slice(0, -1);
         let rsiCandles = candles.map(c => c.close).slice(0, -1);
@@ -98,10 +99,10 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
-                trade.stoploss > lastCandle.low ? {
+                trade.stoploss > liveCandle.close ? { //lastCandle.low
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
-                    price: trade.stoploss,
+                    price: liveCandle.close, //trade.stoploss
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: this.defaultParams.asset,
@@ -116,10 +117,10 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     timeframe: timeFrame,
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
-                trade.stoploss < lastCandle.high ? {
+                trade.stoploss < liveCandle.close ? { //lastCandle.high
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
-                    price: trade.stoploss,
+                    price: liveCandle.close, //trade.stoploss
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: this.defaultParams.asset,
