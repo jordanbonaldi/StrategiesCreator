@@ -82,19 +82,11 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
         let currentTrade: Trade | undefined = undefined
 
         if (!trade)
-            currentTrade = longCond ? {
+            currentTrade = shortCond || longCond ? {
                 entryType: EntryType.ENTRY,
-                type: TradeTypes.LONG,
+                type: longCond ? TradeTypes.LONG : TradeTypes.SHORT,
                 price: lastCandle.close,
-                stoploss: stopLossLong,
-                exitType: ExitTypes.PROFIT,
-                asset: params.asset,
-                timeframe: timeFrame,
-            } : shortCond ? {
-                entryType: EntryType.ENTRY,
-                type: TradeTypes.SHORT,
-                price: lastCandle.close,
-                stoploss: stopLossShort,
+                stoploss: longCond ? stopLossLong : stopLossShort,
                 exitType: ExitTypes.PROFIT,
                 asset: params.asset,
                 timeframe: timeFrame,
