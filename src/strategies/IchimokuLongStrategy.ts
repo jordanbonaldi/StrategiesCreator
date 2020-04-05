@@ -123,15 +123,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 price: lastCandle.close,
                 stoploss: stopLossLong,
                 exitType: ExitTypes.PROFIT,
-                asset: params.asset,
-                timeframe: timeFrame,
-            } : (exitCond || (trade && lastCandle.close < trade.stoploss)) && trade?.entryType == EntryType.ENTRY ? {
-                entryType: EntryType.EXIT,
-                type: TradeTypes.LONG,
-                price: lastCandle.close < trade.stoploss ? trade.stoploss : lastCandle.close,
-                stoploss: 0,
-                exitType: ExitTypes.PROFIT,
-                asset: params.asset,
+                asset: this.defaultParams.asset,
                 timeframe: timeFrame,
             } : undefined;
         else
@@ -161,7 +153,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             price: 0,
             stoploss: 0,
             exitType: ExitTypes.PROFIT,
-            asset: params.asset,
+            asset: this.defaultParams.asset,
             timeframe: timeFrame,
         }
 
