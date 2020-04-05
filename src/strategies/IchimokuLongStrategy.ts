@@ -4,6 +4,7 @@ import {CandleModel} from "@jordanbonaldi/binancefetcher";
 import {RiskType} from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
 import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import { ExitTypes } from "../entity/ExitTypes";
 
 export class IchimokuLongInput implements StrategyParams {
     asset = 'BTCUSDT';
@@ -107,6 +108,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 type: TradeTypes.LONG,
                 price: lastCandle.close,
                 stoploss: stoploss,
+                exitType: ExitTypes.PROFIT,
                 asset: this.defaultParams.asset,
                 timeframe: timeFrame,
             } : (exitCond || (trade && lastCandle.close < trade.stoploss)) && trade?.entryType == EntryType.ENTRY ? {
@@ -114,6 +116,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 type: TradeTypes.LONG,
                 price: lastCandle.close < trade.stoploss ? trade.stoploss : lastCandle.close,
                 stoploss: 0,
+                exitType: ExitTypes.PROFIT,
                 asset: this.defaultParams.asset,
                 timeframe: timeFrame,
             } : undefined;
@@ -123,6 +126,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             type: TradeTypes.LONG,
             price: 0,
             stoploss: 0,
+            exitType: ExitTypes.PROFIT,
             asset: this.defaultParams.asset,
             timeframe: timeFrame,
         };

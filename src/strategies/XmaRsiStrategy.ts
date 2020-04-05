@@ -4,6 +4,7 @@ import { CandleModel } from "@jordanbonaldi/binancefetcher";
 import { RiskType } from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
 import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import { ExitTypes } from "../entity/ExitTypes";
 
 export class XmaRsiInput implements StrategyParams {
     asset = 'BTCUSDT';
@@ -83,6 +84,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                 type: TradeTypes.LONG,
                 price: lastCandle.close,
                 stoploss: stopLossLong,
+                exitType: ExitTypes.PROFIT,
                 asset: this.defaultParams.asset,
                 timeframe: timeFrame,
             } : shortCond ? {
@@ -90,6 +92,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                 type: TradeTypes.SHORT,
                 price: lastCandle.close,
                 stoploss: stopLossShort,
+                exitType: ExitTypes.PROFIT,
                 asset: this.defaultParams.asset,
                 timeframe: timeFrame,
             } : undefined;
@@ -100,6 +103,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     type: TradeTypes.LONG,
                     price: trade.stoploss,
                     stoploss: 0,
+                    exitType: ExitTypes.STOPLOSS,
                     asset: this.defaultParams.asset,
                     timeframe: timeFrame,
                 } : !longCond ? {
@@ -107,6 +111,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     type: TradeTypes.LONG,
                     price: lastCandle.close,
                     stoploss: 0,
+                    exitType: ExitTypes.PROFIT,
                     asset: this.defaultParams.asset,
                     timeframe: timeFrame,
                 } : undefined
@@ -116,6 +121,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     type: TradeTypes.SHORT,
                     price: trade.stoploss,
                     stoploss: 0,
+                    exitType: ExitTypes.STOPLOSS,
                     asset: this.defaultParams.asset,
                     timeframe: timeFrame,
                 } : !shortCond ? {
@@ -123,6 +129,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     type: TradeTypes.SHORT,
                     price: lastCandle.close,
                     stoploss: 0,
+                    exitType: ExitTypes.PROFIT,
                     asset: this.defaultParams.asset,
                     timeframe: timeFrame,
                 } : undefined
@@ -133,6 +140,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             type: TradeTypes.LONG,
             price: 0,
             stoploss: 0,
+            exitType: ExitTypes.PROFIT,
             asset: this.defaultParams.asset,
             timeframe: timeFrame,
         }
