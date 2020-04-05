@@ -1,10 +1,10 @@
-import Strategy, {StrategyParams} from "./Strategy";
-import {ichimokucloud, reverseIndex} from "@jordanbonaldi/indicatorsapi";
-import {CandleModel} from "@jordanbonaldi/binancefetcher";
-import {RiskType} from "../entity/BacktestParams";
+import Strategy, { StrategyParams } from "./Strategy";
+import { ichimokucloud, reverseIndex } from "@jordanbonaldi/indicatorsapi";
+import { CandleModel } from "@jordanbonaldi/binancefetcher";
+import { RiskType } from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import {EntryType, TradeTypes} from "../entity/TradeTypes";
-import {ExitTypes} from "../entity/ExitTypes";
+import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import { ExitTypes } from "../entity/ExitTypes";
 
 export class IchimokuLongInput implements StrategyParams {
     asset = 'BTCUSDT';
@@ -74,8 +74,8 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             console.log(reverseIndex(myIchi));
         }
 
-        let lows: number[] = candles.map(c => c.low).slice(0, -1);
-        let highs: number[] = candles.map(c => c.high).slice(0, -1);
+        let lows: number[] = candles.map(c => Number(c.low)).slice(0, -1);
+        let highs: number[] = candles.map(c => Number(c.high)).slice(0, -1);
         let myIchi = ichimokucloud({ low: lows, high: highs, conversionPeriod: params.ichimokuInput.conversionPeriod, basePeriod: params.ichimokuInput.basePeriod, displacement: params.ichimokuInput.displacement, spanPeriod: params.ichimokuInput.spanPeriod });
 
         let liveCandle: CandleModel = reverseIndex(candles);
