@@ -78,10 +78,6 @@ export default abstract class Strategy<T> {
             }
             else if (candleTrade.entryType == EntryType.EXIT && currentTrade) {
                 tradeResult = this.tradeResultComputation(currentTrade, candleTrade);
-                console.log(tradeResult)
-                console.log()
-                console.log()
-                console.log()
 
                 equityPercent = ((currentTrade.type === TradeTypes.LONG ? tradeResult.pricePercent : - tradeResult.pricePercent) / 100);
                 if (backTestParams.riskType === RiskType.PERCENT) {
@@ -105,13 +101,11 @@ export default abstract class Strategy<T> {
                 currentTrade.type === TradeTypes.LONG ? strategyResult.totalLong++ : strategyResult.totalShort++;
                 tradeResult.tradeStatus == TradeStatus.WIN ? strategyResult.win++ : strategyResult.lost++;
                 strategyResult.tradeResults.push(tradeResult);
-
                 currentTrade = undefined;
             }
         }
 
         strategyResult.equityPercent = (currentEquity - backTestParams.equity) / backTestParams.equity * 100;
-        strategyResult.tradeResults = []
         return strategyResult;
     }
 
