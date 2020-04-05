@@ -17,7 +17,7 @@ export class XmaRsiInput implements StrategyParams {
         xmaAntiLagPeriod: 7
     };
     exit = {
-        useStopLoss: true,
+        useStopLoss: false,
         stopPerc: 2.5
     };
 }
@@ -99,7 +99,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
-                trade.stoploss > liveCandle.close ? { //lastCandle.low
+                params.exit.useStopLoss && trade.stoploss > liveCandle.close ? { //lastCandle.low
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
                     price: liveCandle.close, //trade.stoploss
@@ -117,7 +117,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     timeframe: timeFrame,
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
-                trade.stoploss < liveCandle.close ? { //lastCandle.high
+                params.exit.useStopLoss && trade.stoploss < liveCandle.close ? { //lastCandle.high
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
                     price: liveCandle.close, //trade.stoploss
