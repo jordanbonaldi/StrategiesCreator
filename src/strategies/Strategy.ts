@@ -60,7 +60,7 @@ export default abstract class Strategy<T> {
             totalShort: 0,
             win: 0,
             lost: 0,
-            equityPercent: 100,
+            equityPercent: 0,
             maxDrawDown: 0,
             maxLosingStreak: 0,
             tradeResults: [],
@@ -68,7 +68,7 @@ export default abstract class Strategy<T> {
             timeframe: this.defaultParams.timeframe
         };
         let tradeResult: TradeResult;
-        let currentTrade: Trade | undefined = undefined, lastTrade = undefined, candleTrade = undefined, entryTrade = undefined;
+        let currentTrade: Trade | undefined = undefined, candleTrade = undefined;
         let currentEquity: number = backTestParams.equity, losingStreak = 0, saveEquity = backTestParams.equity, drawDown = 0, equityPercent = 0;
 
         for (let a = backTestParams.warm_up; a < candles.length; a++) {
@@ -105,6 +105,7 @@ export default abstract class Strategy<T> {
             }
         }
         strategyResult.equityPercent = (currentEquity - backTestParams.equity) / backTestParams.equity * 100;
+        strategyResult.tradeResults = []
         return strategyResult;
     }
 }
