@@ -98,6 +98,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                 exitType: ExitTypes.PROFIT,
                 asset: params.asset,
                 timeframe: timeFrame,
+                date: new Date()
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
@@ -109,6 +110,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
+                    date: new Date()
                 } : !longCond ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
@@ -117,6 +119,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     exitType: trade.price < lastCandle.close ? ExitTypes.PROFIT : ExitTypes.LOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
+                    date: new Date()
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
                 params.exit.useStopLoss && trade.stoploss < liveCandle.close ? { //lastCandle.high
@@ -127,6 +130,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
+                    date: new Date()
                 } : !shortCond ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
@@ -135,6 +139,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     exitType:  trade.price > lastCandle.close ? ExitTypes.PROFIT : ExitTypes.LOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
+                    date: new Date()
                 } : undefined
             ) : undefined;
 
@@ -146,6 +151,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
             exitType: ExitTypes.PROFIT,
             asset: params.asset,
             timeframe: timeFrame,
+            date: new Date()
         }
     }
 }
