@@ -1,20 +1,20 @@
-import Strategy from "../strategies/Strategy";
+import Strategy, {StrategyParams} from "../strategies/Strategy";
 
-export interface PersistenceAllowanceInterface {
-    params: any;
-    data: any;
+export interface PersistenceAllowanceInterface<T, U> {
+    params: T & StrategyParams;
+    data: U | undefined;
 }
 
 export default new class PersistenceManager {
 
-    private persistences : Map<String, PersistenceAllowanceInterface[]> = new Map<String, PersistenceAllowanceInterface[]>();
+    private persistences : Map<String, PersistenceAllowanceInterface<any, any>[]> = new Map<String, PersistenceAllowanceInterface<any, any>[]>();
 
-    getPersistenceFromPersistenceAllowanceInterfaceArray<T>(strategy: Strategy<T>, pais: PersistenceAllowanceInterface[]): PersistenceAllowanceInterface | undefined {
-        return pais.filter((pai: PersistenceAllowanceInterface) => pai.params == strategy.defaultParams)[0];
+    getPersistenceFromPersistenceAllowanceInterfaceArray<T, U>(strategy: Strategy<T, U>, pais: PersistenceAllowanceInterface<T, U>[]): PersistenceAllowanceInterface<T, U> | undefined {
+        return pais.filter((pai: PersistenceAllowanceInterface<T, U>) => pai.params == strategy.defaultParams)[0];
     }
 
-    getPersistences<T>(strategy: Strategy<T>): PersistenceAllowanceInterface[] | undefined {
-        let pais: PersistenceAllowanceInterface[] | undefined = this.persistences.get(strategy.name);
+    getPersistences<T, U>(strategy: Strategy<T, U>): PersistenceAllowanceInterface<T, U>[] | undefined {
+        let pais: PersistenceAllowanceInterface<T, U>[] | undefined = this.persistences.get(strategy.name);
 
         if (pais == undefined)
             return undefined;
@@ -22,25 +22,25 @@ export default new class PersistenceManager {
         return pais;
     }
     
-    getPersistence<T>(strategy: Strategy<T>): PersistenceAllowanceInterface | undefined {
-        let pais: PersistenceAllowanceInterface[] | undefined = this.getPersistences(strategy);
+    getPersistence<T, U>(strategy: Strategy<T, U>): PersistenceAllowanceInterface<T, U> | undefined {
+        let pais: PersistenceAllowanceInterface<T, U>[] | undefined = this.getPersistences(strategy);
 
-        return pais == undefined ? undefined : this.getPersistenceFromPersistenceAllowanceInterfaceArray(strategy, pais);
+        return pais == undefined ? undefined : this.getPersistenceFromPersistenceAllowanceInterfaceArray<T, U>(strategy, pais);
     }
 
-    setPersistence<T>(strategy: Strategy<T>) {
-        let pais: PersistenceAllowanceInterface[] | undefined = this.getPersistences<T>(strategy);
+    setPersistence<T, U>(strategy: Strategy<T, U>) {
+        let pais: PersistenceAllowanceInterface<T, U>[] | undefined = this.getPersistences<T, U>(strategy);
         
         if (pais != null) {
-            let _pai: PersistenceAllowanceInterface | undefined = this.getPersistenceFromPersistenceAllowanceInterfaceArray(strategy, pais);
+            let _pai: PersistenceAllowanceInterface<T, U> | undefined = this.getPersistenceFromPersistenceAllowanceInterfaceArray<T, U>(strategy, pais);
             return _pai == null ? pais.push({
-                data: strategy.data, params: strategy.defaultParams
+                data: strategy.data as U | undefined, params: strategy.defaultParams
             }) : _pai.data = strategy.data;
         }
 
         this.persistences.set(strategy.name, [{
-            params: strategy.defaultParams,
-            data: strategy.data
+            params: strategy.defaultParams as (T & StrategyParams),
+            data: strategy.data as U
         }]);
     }
 

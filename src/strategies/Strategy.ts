@@ -1,23 +1,27 @@
-import { CandleModel } from "@jordanbonaldi/binancefetcher";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
 import StrategyHandler from "../handlers/StrategyHandler";
 import StrategyResult from "../entity/StrategyResult";
-import BackTestParams, { RiskType } from "../entity/BacktestParams";
-import TradeResult, { TradeStatus } from "../entity/TradeResult";
+import BackTestParams, {RiskType} from "../entity/BacktestParams";
+import TradeResult, {TradeStatus} from "../entity/TradeResult";
 import Trade from "../entity/Trade";
-import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import {EntryType, TradeTypes} from "../entity/TradeTypes";
 import PersistenceManager, {PersistenceAllowanceInterface} from "../handlers/PersistenceManager";
 
 export interface StrategyParams {
     asset: string;
     timeframe: string[];
-}
+};
 
-export default abstract class Strategy<T> {
+export interface Persistence {
+
+};
+
+export default abstract class Strategy<T, U> {
     name !: string;
     defaultParams !: T & StrategyParams;
     backTestParams !: BackTestParams;
 
-    data: any;
+    data: U | undefined;
 
     protected constructor(
         name: string,
@@ -37,14 +41,7 @@ export default abstract class Strategy<T> {
         trade: Trade | undefined = undefined,
         params: T & StrategyParams = this.defaultParams,
     ): Trade {
-        let pai: PersistenceAllowanceInterface | undefined = PersistenceManager.getPersistence<T>(this);
-        this.data = pai == null ? null : pai.data;
-
-        let _trade: Trade = this.launchStrategy(candles, trade, timeFrame, params);
-
-        PersistenceManager.setPersistence<T>(this);
-
-        return _trade;
+        return this.launchTrade(() => this.launchStrategy(candles, trade, timeFrame, params));
     }
 
     abstract launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: T & StrategyParams): Trade;
@@ -56,6 +53,16 @@ export default abstract class Strategy<T> {
             pricePercent: (exitTrade.price - entryTrade.price) / entryTrade.price * 100,
             tradeStatus: entryTrade.type == TradeTypes.LONG ? (entryTrade.price < exitTrade.price ? TradeStatus.WIN : entryTrade.price > exitTrade.price ? TradeStatus.LOST : TradeStatus.BREAK_EVEN) : (entryTrade.price > exitTrade.price ? TradeStatus.WIN : entryTrade.price < exitTrade.price ? TradeStatus.LOST : TradeStatus.BREAK_EVEN),
         };
+    }
+
+    launchTrade(callback: () => Trade) {
+        let pai: PersistenceAllowanceInterface<T, U> | undefined = PersistenceManager.getPersistence<T, U>(this);
+        console.log(pai);
+        this.data = pai == null ? undefined : pai.data;
+        let trade: Trade = callback();
+        PersistenceManager.setPersistence<T, U>(this);
+
+        return trade;
     }
 
     tryStrategy(
@@ -82,7 +89,9 @@ export default abstract class Strategy<T> {
         let currentEquity: number = backTestParams.equity, losingStreak = 0, saveEquity = backTestParams.equity, drawDown = 0, equityPercent = 0;
 
         for (let a = backTestParams.warm_up; a < candles.length; a++) {
-            candleTrade = this.launchStrategy(candles.slice(0, a), currentTrade, timeFrame, params);
+            let candleTrade: Trade = this.launchTrade(() => this.launchStrategy(
+                candles.slice(0, a), currentTrade, timeFrame, params
+            ));
             if (candleTrade.entryType == EntryType.ENTRY && !currentTrade) {
                 currentTrade = candleTrade;
             }

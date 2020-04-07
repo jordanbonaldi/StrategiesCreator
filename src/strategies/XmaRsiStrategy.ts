@@ -1,10 +1,10 @@
-import Strategy, { StrategyParams } from "./Strategy";
-import { Alma, ema, reverseIndex, rsi, Zlema } from "@jordanbonaldi/indicatorsapi";
-import { CandleModel } from "@jordanbonaldi/binancefetcher";
-import { RiskType } from "../entity/BacktestParams";
+import Strategy, {Persistence, StrategyParams} from "./Strategy";
+import {Alma, ema, reverseIndex, rsi, Zlema} from "@jordanbonaldi/indicatorsapi";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
+import {RiskType} from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import { EntryType, TradeTypes } from "../entity/TradeTypes";
-import { ExitTypes } from "../entity/ExitTypes";
+import {EntryType, TradeTypes} from "../entity/TradeTypes";
+import {ExitTypes} from "../entity/ExitTypes";
 
 export class XmaRsiInput implements StrategyParams {
 
@@ -24,7 +24,11 @@ export class XmaRsiInput implements StrategyParams {
 
 }
 
-export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
+export interface XmaPersistence extends Persistence {
+    value: number;
+}
+
+export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersistence> {
     constructor() {
         super('XmaRsiStrategy', new XmaRsiInput(), {
             equity: 10000, riskInTrade: 90, riskType: RiskType.PERCENT, warm_up: 70
@@ -80,6 +84,10 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
         let stopLossShort: number = params.exit.useStopLoss ? lastCandle.close * (1 + params.exit.stopPerc / 100) : 0;
 
         let currentTrade: Trade | undefined = undefined
+
+        if (!this.data)
+            this.data = { value: 0 };
+        this.data.value += 1;
 
         if (!trade)
             currentTrade = shortCond || longCond ? {

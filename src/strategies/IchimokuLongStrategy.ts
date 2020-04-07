@@ -1,4 +1,4 @@
-import Strategy, { StrategyParams } from "./Strategy";
+import Strategy, {Persistence, StrategyParams} from "./Strategy";
 import { ichimokucloud, reverseIndex } from "@jordanbonaldi/indicatorsapi";
 import { CandleModel } from "@jordanbonaldi/binancefetcher";
 import { RiskType } from "../entity/BacktestParams";
@@ -45,7 +45,7 @@ export class IchimokuLongInput implements StrategyParams {
     };
 }
 
-export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput> {
+export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput, Persistence> {
     constructor() {
         super('IchimokuLongStrategy',
             new IchimokuLongInput(),
