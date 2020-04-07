@@ -5,6 +5,7 @@ import BackTestParams, { RiskType } from "../entity/BacktestParams";
 import TradeResult, { TradeStatus } from "../entity/TradeResult";
 import Trade from "../entity/Trade";
 import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import PersistenceManager, {PersistenceAllowanceInterface} from "../handlers/PersistenceManager";
 
 export interface StrategyParams {
     asset: string;
@@ -15,6 +16,8 @@ export default abstract class Strategy<T> {
     name !: string;
     defaultParams !: T & StrategyParams;
     backTestParams !: BackTestParams;
+
+    data: any;
 
     protected constructor(
         name: string,
@@ -34,12 +37,19 @@ export default abstract class Strategy<T> {
         trade: Trade | undefined = undefined,
         params: T & StrategyParams = this.defaultParams,
     ): Trade {
-        return this.launchStrategy(candles, trade, timeFrame, params);
+        let pai: PersistenceAllowanceInterface | undefined = PersistenceManager.getPersistence<T>(this);
+        this.data = pai == null ? null : pai.data;
+
+        let _trade: Trade = this.launchStrategy(candles, trade, timeFrame, params);
+
+        PersistenceManager.setPersistence<T>(this);
+
+        return _trade;
     }
 
     abstract launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: T & StrategyParams): Trade;
 
-    private tradeResultComputation(entryTrade: Trade, exitTrade: Trade): TradeResult {
+    private static tradeResultComputation(entryTrade: Trade, exitTrade: Trade): TradeResult {
         return {
             entryTrade: entryTrade,
             exitTrade: exitTrade,
@@ -77,7 +87,7 @@ export default abstract class Strategy<T> {
                 currentTrade = candleTrade;
             }
             else if (candleTrade.entryType == EntryType.EXIT && currentTrade) {
-                tradeResult = this.tradeResultComputation(currentTrade, candleTrade);
+                tradeResult = Strategy.tradeResultComputation(currentTrade, candleTrade);
 
                 equityPercent = ((currentTrade.type === TradeTypes.LONG ? tradeResult.pricePercent : - tradeResult.pricePercent) / 100);
                 if (backTestParams.riskType === RiskType.PERCENT) {
@@ -105,7 +115,7 @@ export default abstract class Strategy<T> {
             }
         }
         strategyResult.equityPercent = (currentEquity - backTestParams.equity) / backTestParams.equity * 100;
-        strategyResult.tradeResults = []
+        strategyResult.tradeResults = [];
         return strategyResult;
     }
 }
