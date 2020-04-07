@@ -29,13 +29,13 @@ export class IchimokuLongInput implements StrategyParams {
     exit = {
         exitCrossTKBear: true,
         exitPriceUnderTenkan: false,
-        exitPriceUnderKijun: true,
+        exitPriceUnderKijun: false,
         exitPriceUnderKumo: false,
         exitChikuUnderPrice: false,
         exitChikuUnderTenkan: false,
         exitChikuUnderKijun: false,
         exitChikuUnderKumo: false,
-        exitFuturDark: true,
+        exitFuturDark: false,
         useStopLoss: false,
         stopPerc: 10
     };
@@ -141,7 +141,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                     type: TradeTypes.LONG,
                     price: lastCandle.close,
                     stoploss: 0,
-                    exitType: ExitTypes.PROFIT,
+                    exitType: trade.price < lastCandle.close ? ExitTypes.PROFIT : ExitTypes.LOSS,
                     asset: this.defaultParams.asset,
                     timeframe: timeFrame,
                 } : undefined

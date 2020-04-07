@@ -1,10 +1,10 @@
-import Strategy, {StrategyParams} from "./Strategy";
-import {Alma, ema, reverseIndex, rsi, Zlema} from "@jordanbonaldi/indicatorsapi";
-import {CandleModel} from "@jordanbonaldi/binancefetcher";
-import {RiskType} from "../entity/BacktestParams";
+import Strategy, { StrategyParams } from "./Strategy";
+import { Alma, ema, reverseIndex, rsi, Zlema } from "@jordanbonaldi/indicatorsapi";
+import { CandleModel } from "@jordanbonaldi/binancefetcher";
+import { RiskType } from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import {EntryType, TradeTypes} from "../entity/TradeTypes";
-import {ExitTypes} from "../entity/ExitTypes";
+import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import { ExitTypes } from "../entity/ExitTypes";
 
 export class XmaRsiInput implements StrategyParams {
 
@@ -106,7 +106,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     type: TradeTypes.LONG,
                     price: lastCandle.close,
                     stoploss: 0,
-                    exitType: ExitTypes.PROFIT,
+                    exitType: trade.price < lastCandle.close ? ExitTypes.PROFIT : ExitTypes.LOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
                 } : undefined
@@ -124,7 +124,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput> {
                     type: TradeTypes.SHORT,
                     price: lastCandle.close,
                     stoploss: 0,
-                    exitType: ExitTypes.PROFIT,
+                    exitType:  trade.price > lastCandle.close ? ExitTypes.PROFIT : ExitTypes.LOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
                 } : undefined
