@@ -12,9 +12,7 @@ export interface StrategyParams {
     timeframe: string[];
 };
 
-export interface Persistence {
-
-};
+export interface Persistence {}
 
 export default abstract class Strategy<T, U> {
     name !: string;
@@ -57,7 +55,6 @@ export default abstract class Strategy<T, U> {
 
     launchTrade(callback: () => Trade) {
         let pai: PersistenceAllowanceInterface<T, U> | undefined = PersistenceManager.getPersistence<T, U>(this);
-        console.log(pai);
         this.data = pai == null ? undefined : pai.data;
         let trade: Trade = callback();
         PersistenceManager.setPersistence<T, U>(this);

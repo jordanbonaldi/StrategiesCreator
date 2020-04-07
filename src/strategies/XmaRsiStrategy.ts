@@ -83,7 +83,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
         let stopLossLong: number = params.exit.useStopLoss ? lastCandle.close * (1 - params.exit.stopPerc / 100) : 0;
         let stopLossShort: number = params.exit.useStopLoss ? lastCandle.close * (1 + params.exit.stopPerc / 100) : 0;
 
-        let currentTrade: Trade | undefined = undefined
+        let currentTrade: Trade | undefined = undefined;
 
         if (!this.data)
             this.data = { value: 0 };
