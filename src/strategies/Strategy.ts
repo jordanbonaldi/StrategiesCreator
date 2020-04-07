@@ -5,7 +5,7 @@ import BackTestParams, {RiskType} from "../entity/BacktestParams";
 import TradeResult, {TradeStatus} from "../entity/TradeResult";
 import Trade from "../entity/Trade";
 import {EntryType, TradeTypes} from "../entity/TradeTypes";
-import PersistenceManager, {PersistenceAllowanceInterface} from "../handlers/PersistenceManager";
+import PersistenceManager, {PersistenceAllowanceInterface} from "../handlers/PersistenceHandler";
 
 export interface StrategyParams {
     asset: string;

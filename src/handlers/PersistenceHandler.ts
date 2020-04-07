@@ -7,10 +7,14 @@ export interface PersistenceAllowanceInterface<T, U> {
 
 export default new class PersistenceManager {
 
-    private persistences : Map<String, PersistenceAllowanceInterface<any, any>[]> = new Map<String, PersistenceAllowanceInterface<any, any>[]>();
+    private persistences !: Map<String, PersistenceAllowanceInterface<any, any>[]>;
+
+    constructor() {
+        this.persistences = new Map<String, PersistenceAllowanceInterface<any, any>[]>()
+    }
 
     getPersistenceFromPersistenceAllowanceInterfaceArray<T, U>(strategy: Strategy<T, U>, pais: PersistenceAllowanceInterface<T, U>[]): PersistenceAllowanceInterface<T, U> | undefined {
-        return pais.filter((pai: PersistenceAllowanceInterface<T, U>) => pai.params == strategy.defaultParams)[0];
+        return pais.filter((pai: PersistenceAllowanceInterface<T, U>) => JSON.stringify(pai.params) === JSON.stringify(strategy.defaultParams))[0];
     }
 
     getPersistences<T, U>(strategy: Strategy<T, U>): PersistenceAllowanceInterface<T, U>[] | undefined {
