@@ -13,10 +13,19 @@ export default new class PersistenceManager {
         this.persistences = new Map<String, PersistenceAllowanceInterface<any, any>[]>()
     }
 
+    /**
+     *
+     * @param strategy
+     * @param pais
+     */
     getPersistenceFromPersistenceAllowanceInterfaceArray<T, U>(strategy: Strategy<T, U>, pais: PersistenceAllowanceInterface<T, U>[]): PersistenceAllowanceInterface<T, U> | undefined {
         return pais.filter((pai: PersistenceAllowanceInterface<T, U>) => JSON.stringify(pai.params) === JSON.stringify(strategy.defaultParams))[0];
     }
 
+    /**
+     *
+     * @param strategy
+     */
     getPersistences<T, U>(strategy: Strategy<T, U>): PersistenceAllowanceInterface<T, U>[] | undefined {
         let pais: PersistenceAllowanceInterface<T, U>[] | undefined = this.persistences.get(strategy.name);
 
@@ -25,13 +34,21 @@ export default new class PersistenceManager {
 
         return pais;
     }
-    
+
+    /**
+     *
+     * @param strategy
+     */
     getPersistence<T, U>(strategy: Strategy<T, U>): PersistenceAllowanceInterface<T, U> | undefined {
         let pais: PersistenceAllowanceInterface<T, U>[] | undefined = this.getPersistences(strategy);
 
         return pais == undefined ? undefined : this.getPersistenceFromPersistenceAllowanceInterfaceArray<T, U>(strategy, pais);
     }
 
+    /**
+     *
+     * @param strategy
+     */
     setPersistence<T, U>(strategy: Strategy<T, U>) {
         let pais: PersistenceAllowanceInterface<T, U>[] | undefined = this.getPersistences<T, U>(strategy);
         

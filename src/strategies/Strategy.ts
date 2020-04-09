@@ -7,20 +7,30 @@ import Trade from "../entity/Trade";
 import {EntryType, TradeTypes} from "../entity/TradeTypes";
 import PersistenceManager, {PersistenceAllowanceInterface} from "../handlers/PersistenceHandler";
 
+
 export interface StrategyParams {
     asset: string;
     timeframe: string[];
-};
+    useStopLoss: boolean;
+    stopPercentage: number;
+}
 
 export interface Persistence {}
 
 export default abstract class Strategy<T, U> {
+
     name !: string;
     defaultParams !: T & StrategyParams;
     backTestParams !: BackTestParams;
 
     data: U | undefined;
 
+    /**
+     *
+     * @param name
+     * @param defaultParams
+     * @param backTestParams
+     */
     protected constructor(
         name: string,
         defaultParams: T & StrategyParams,
@@ -42,8 +52,20 @@ export default abstract class Strategy<T, U> {
         return this.launchTrade(() => this.launchStrategy(candles, trade, timeFrame, params));
     }
 
+    /**
+     *
+     * @param candles
+     * @param trade
+     * @param timeFrame
+     * @param params
+     */
     abstract launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: T & StrategyParams): Trade;
 
+    /**
+     *
+     * @param entryTrade
+     * @param exitTrade
+     */
     private static tradeResultComputation(entryTrade: Trade, exitTrade: Trade): TradeResult {
         return {
             entryTrade: entryTrade,
@@ -53,6 +75,10 @@ export default abstract class Strategy<T, U> {
         };
     }
 
+    /**
+     *
+     * @param callback
+     */
     launchTrade(callback: () => Trade) {
         let pai: PersistenceAllowanceInterface<T, U> | undefined = PersistenceManager.getPersistence<T, U>(this);
         this.data = pai == null ? undefined : pai.data;
@@ -62,6 +88,13 @@ export default abstract class Strategy<T, U> {
         return trade;
     }
 
+    /**
+     *
+     * @param candles
+     * @param timeFrame
+     * @param backTestParams
+     * @param params
+     */
     tryStrategy(
         candles: CandleModel[],
         timeFrame: string,

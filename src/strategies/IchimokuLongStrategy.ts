@@ -1,14 +1,16 @@
 import Strategy, {Persistence, StrategyParams} from "./Strategy";
-import { ichimokucloud, reverseIndex } from "@jordanbonaldi/indicatorsapi";
-import { CandleModel } from "@jordanbonaldi/binancefetcher";
-import { RiskType } from "../entity/BacktestParams";
+import {ichimokucloud, reverseIndex} from "@jordanbonaldi/indicatorsapi";
+import {CandleModel} from "@jordanbonaldi/binancefetcher";
+import {RiskType} from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
-import { EntryType, TradeTypes } from "../entity/TradeTypes";
-import { ExitTypes } from "../entity/ExitTypes";
+import {EntryType, TradeTypes} from "../entity/TradeTypes";
+import {ExitTypes} from "../entity/ExitTypes";
 
 export class IchimokuLongInput implements StrategyParams {
     asset = 'BTCUSDT';
     timeframe = ['1h'];
+    stopPercentage: number =  0;
+    useStopLoss: boolean = false;
     ichimokuInput = {
         conversionPeriod: 9,
         basePeriod: 26,
@@ -36,8 +38,6 @@ export class IchimokuLongInput implements StrategyParams {
         exitChikuUnderKijun: false,
         exitChikuUnderKumo: false,
         exitFuturDark: false,
-        useStopLoss: false,
-        stopPerc: 10
     };
     misc = {
         long: true,
@@ -112,7 +112,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
 
         let exitOneCond: boolean = params.exit.exitCrossTKBear || params.exit.exitPriceUnderTenkan || params.exit.exitPriceUnderKijun || params.exit.exitPriceUnderKumo || params.exit.exitChikuUnderPrice || params.exit.exitChikuUnderTenkan || params.exit.exitChikuUnderKijun || params.exit.exitChikuUnderKumo || params.exit.exitFuturDark;
         let exitCond: boolean = exitOneCond && (exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderPrice && exitIsChikuUnderTenkan && exitIsChikuUnderKijun && exitIsChikuUnderKumo && exitIsFuturDark);
-        let stopLossLong: number = params.exit.useStopLoss ? lastCandle.close * (1 - params.exit.stopPerc / 100) : 0;
+        let stopLossLong: number = params.useStopLoss ? lastCandle.close * (1 - params.stopPercentage / 100) : 0;
 
         let currentTrade: Trade | undefined = undefined
 
@@ -129,7 +129,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
-                params.exit.useStopLoss && trade.stoploss > liveCandle.close ? { //lastCandle.low
+                params.useStopLoss && trade.stoploss > liveCandle.close ? { //lastCandle.low
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
                     price: liveCandle.close, //trade.stoploss

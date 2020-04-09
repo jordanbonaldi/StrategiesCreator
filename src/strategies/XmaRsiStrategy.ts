@@ -17,11 +17,8 @@ export class XmaRsiInput implements StrategyParams {
         useAntiLag: true,
         xmaAntiLagPeriod: 7
     };
-    exit = {
-        useStopLoss: true,
-        stopPerc: 2.5
-    };
-
+    stopPercentage: number =  0;
+    useStopLoss: boolean = false;
 }
 
 export interface XmaPersistence extends Persistence {
@@ -85,8 +82,8 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
 
         let longCond = isXmaBull && isXmaRsiBull;
         let shortCond = !isXmaBull && !isXmaRsiBull;
-        let stopLossLong: number = params.exit.useStopLoss ? lastCandle.close * (1 - params.exit.stopPerc / 100) : 0;
-        let stopLossShort: number = params.exit.useStopLoss ? lastCandle.close * (1 + params.exit.stopPerc / 100) : 0;
+        let stopLossLong: number = params.useStopLoss ? lastCandle.close * (1 - params.stopPercentage / 100) : 0;
+        let stopLossShort: number = params.useStopLoss ? lastCandle.close * (1 + params.stopPercentage / 100) : 0;
 
         let currentTrade: Trade | undefined = undefined;
 
@@ -107,7 +104,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
-                params.exit.useStopLoss && trade.stoploss > liveCandle.close ? { //lastCandle.low
+                params.useStopLoss && trade.stoploss > liveCandle.close ? { //lastCandle.low
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
                     price: liveCandle.close, //trade.stoploss
@@ -127,7 +124,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     date: new Date()
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
-                params.exit.useStopLoss && trade.stoploss < liveCandle.close ? { //lastCandle.high
+                params.useStopLoss && trade.stoploss < liveCandle.close ? { //lastCandle.high
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
                     price: liveCandle.close, //trade.stoploss
