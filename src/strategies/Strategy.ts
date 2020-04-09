@@ -1,11 +1,11 @@
-import {CandleModel} from "@jordanbonaldi/binancefetcher";
+import { CandleModel } from "@jordanbonaldi/binancefetcher";
 import StrategyHandler from "../handlers/StrategyHandler";
 import StrategyResult from "../entity/StrategyResult";
-import BackTestParams, {RiskType} from "../entity/BacktestParams";
-import TradeResult, {TradeStatus} from "../entity/TradeResult";
+import BackTestParams, { RiskType } from "../entity/BacktestParams";
+import TradeResult, { TradeStatus } from "../entity/TradeResult";
 import Trade from "../entity/Trade";
-import {EntryType, TradeTypes} from "../entity/TradeTypes";
-import PersistenceManager, {PersistenceAllowanceInterface} from "../handlers/PersistenceHandler";
+import { EntryType, TradeTypes } from "../entity/TradeTypes";
+import PersistenceManager, { PersistenceAllowanceInterface } from "../handlers/PersistenceHandler";
 
 
 export interface StrategyParams {
@@ -15,7 +15,7 @@ export interface StrategyParams {
     stopPercentage: number;
 }
 
-export interface Persistence {}
+export interface Persistence { }
 
 export default abstract class Strategy<T, U> {
 
@@ -116,7 +116,7 @@ export default abstract class Strategy<T, U> {
         };
         let tradeResult: TradeResult;
         let currentTrade: Trade | undefined = undefined, candleTrade = undefined;
-        let currentEquity: number = backTestParams.equity, losingStreak = 0, saveEquity = backTestParams.equity, drawDown = 0, equityPercent = 0;
+        let currentEquity: number = backTestParams.equity, losingStreak = 0, saveEquity = backTestParams.equity, drawDown = 0, equityPercent = 0, prevEquity = saveEquity;
 
         for (let a = backTestParams.warm_up; a < candles.length; a++) {
             let candleTrade: Trade = this.launchTrade(() => this.launchStrategy(
@@ -127,7 +127,8 @@ export default abstract class Strategy<T, U> {
             }
             else if (candleTrade.entryType == EntryType.EXIT && currentTrade) {
                 tradeResult = Strategy.tradeResultComputation(currentTrade, candleTrade);
-
+                console.log(tradeResult)
+                console.log()
                 equityPercent = ((currentTrade.type === TradeTypes.LONG ? tradeResult.pricePercent : - tradeResult.pricePercent) / 100);
                 if (backTestParams.riskType === RiskType.PERCENT) {
                     currentEquity += (currentEquity * backTestParams.riskInTrade / 100) * equityPercent;
@@ -138,13 +139,14 @@ export default abstract class Strategy<T, U> {
                 if (tradeResult.tradeStatus === TradeStatus.LOST) {
                     losingStreak++;
                 } else if (tradeResult.tradeStatus === TradeStatus.WIN) {
-                    drawDown = (saveEquity - currentEquity) / saveEquity * 100;
-                    strategyResult.maxLosingStreak = losingStreak > strategyResult.maxLosingStreak ? losingStreak : strategyResult.maxLosingStreak;
+                    drawDown = (saveEquity - prevEquity) / saveEquity * 100;
                     strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
+                    strategyResult.maxLosingStreak = losingStreak > strategyResult.maxLosingStreak ? losingStreak : strategyResult.maxLosingStreak;
                     saveEquity = currentEquity;
                     losingStreak = 0;
                     drawDown = 0;
                 }
+                prevEquity = currentEquity;
 
                 strategyResult.total++;
                 currentTrade.type === TradeTypes.LONG ? strategyResult.totalLong++ : strategyResult.totalShort++;
@@ -153,6 +155,8 @@ export default abstract class Strategy<T, U> {
                 currentTrade = undefined;
             }
         }
+        drawDown = (saveEquity - prevEquity) / saveEquity * 100;
+        strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
         strategyResult.equityPercent = (currentEquity - backTestParams.equity) / backTestParams.equity * 100;
         strategyResult.tradeResults = [];
         return strategyResult;

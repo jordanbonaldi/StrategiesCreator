@@ -17,8 +17,9 @@ export class XmaRsiInput implements StrategyParams {
         useAntiLag: true,
         xmaAntiLagPeriod: 7
     };
-    stopPercentage: number =  0;
-    useStopLoss: boolean = false;
+    stopPercentage: number = 2.5;
+    useStopLoss: boolean = true;
+    useHaCandle: boolean = true;
 }
 
 export interface XmaPersistence extends Persistence {
@@ -56,32 +57,43 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
         return smmaData;
     }
 
-    launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: XmaRsiInput & StrategyParams): Trade {
-        let printDebug: Function = (): void => {
-            console.log(`Candles length: ${candles.length}`);
-            console.log("candles: " + candles.map(c => c.close)[998]);
-            console.log("xMA: " + myXma);
-            console.log("xMA LEN: " + myXma.length);
-            console.log("RSI: " + myRsi.slice(myRsi.length - 4, 999));
-            console.log("xMA RSI: " + myXmaRsi.slice(myXmaRsi.length - 4, 999));
-        };
+    heikinAshi(input: CandleModel[]): CandleModel[] {
+        let haCandles: CandleModel[] = [];
+        haCandles.push(input[0])
+        for (let a: number = 1; a < input.length; a++) {
+            let open: number = (haCandles[a - 1].open + haCandles[a - 1].close) / 2;
+            let close: number = (input[a].open + input[a].close + input[a].low + input[a].high) / 4;
+            haCandles.push({
+                open: open,
+                close: close,
+                high: Math.max(input[a].high, open, close),
+                low: Math.min(input[a].low, open, close),
+                volume: input[a].volume,
+                isFinal: input[a].isFinal
+            })
+        }
+        return haCandles
+    }
 
+    launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: XmaRsiInput & StrategyParams): Trade {
         let lastCandle: CandleModel = reverseIndex(candles, 1);
         let liveCandle: CandleModel = reverseIndex(candles);
+        let source: CandleModel[] = params.useHaCandle ? this.heikinAshi(candles) : candles;
 
-        let xmaCandles = candles.map(c => c.close).slice(0, -1);
-        let rsiCandles = candles.map(c => c.close).slice(0, -1);
+        let xmaCandles = source.map(c => c.close).slice(0, -1);
+        let rsiCandles = source.map(c => c.close).slice(0, -1);
         let myXma: number[] = Alma({ period: params.data.xmaPeriod, values: xmaCandles, offset: 0.5, sigma: 6 });
         let myRsi = rsi({ period: params.data.rsiPeriod, values: rsiCandles });
         let myXmaRsi = Zlema({ period: params.data.xmaRsiPeriod, values: myRsi });
         let myXmaAntiLag = this.smma({ period: params.data.xmaAntiLagPeriod, values: xmaCandles })
-
         let isXmaBull = reverseIndex(myXma) > reverseIndex(myXma, 1);
         let isXmaRsiBull = reverseIndex(myXmaRsi) > reverseIndex(myXmaRsi, 1);
         let isXmaAntiLagBull = reverseIndex(myXmaAntiLag) > reverseIndex(myXmaAntiLag, 1)
 
-        let longCond = isXmaBull && isXmaRsiBull;
-        let shortCond = !isXmaBull && !isXmaRsiBull;
+        let entryLongCond = isXmaBull && isXmaRsiBull && isXmaAntiLagBull;
+        let entryShortCond = !isXmaBull && !isXmaRsiBull && !isXmaAntiLagBull;
+        let exitLongCond = !isXmaBull;
+        let exitShortCond = isXmaBull;
         let stopLossLong: number = params.useStopLoss ? lastCandle.close * (1 - params.stopPercentage / 100) : 0;
         let stopLossShort: number = params.useStopLoss ? lastCandle.close * (1 + params.stopPercentage / 100) : 0;
 
@@ -92,11 +104,11 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
         this.data.value += 1;
 
         if (!trade)
-            currentTrade = shortCond || longCond ? {
+            currentTrade = entryShortCond || entryLongCond ? {
                 entryType: EntryType.ENTRY,
-                type: longCond ? TradeTypes.LONG : TradeTypes.SHORT,
+                type: entryLongCond ? TradeTypes.LONG : TradeTypes.SHORT,
                 price: lastCandle.close,
-                stoploss: longCond ? stopLossLong : stopLossShort,
+                stoploss: entryLongCond ? stopLossLong : stopLossShort,
                 exitType: ExitTypes.PROFIT,
                 asset: params.asset,
                 timeframe: timeFrame,
@@ -104,16 +116,16 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
-                params.useStopLoss && trade.stoploss > liveCandle.close ? { //lastCandle.low
+                params.useStopLoss && trade.stoploss > lastCandle.low ? { //liveCandle.close
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
-                    price: liveCandle.close, //trade.stoploss
+                    price: trade.stoploss, //liveCandle.close
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
                     date: new Date()
-                } : !longCond ? {
+                } : exitLongCond ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
                     price: lastCandle.close,
@@ -124,16 +136,16 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     date: new Date()
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
-                params.useStopLoss && trade.stoploss < liveCandle.close ? { //lastCandle.high
+                params.useStopLoss && trade.stoploss < lastCandle.high ? { //liveCandle.close
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
-                    price: liveCandle.close, //trade.stoploss
+                    price: trade.stoploss, //liveCandle.close
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,
                     timeframe: timeFrame,
                     date: new Date()
-                } : !shortCond ? {
+                } : exitShortCond ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
                     price: lastCandle.close,

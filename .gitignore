@@ -110,3 +110,5 @@ dist
 
 lib/
 package-lock.json
+
+Embed/
