@@ -11,5 +11,5 @@ export default interface Trade {
     timeframe: string,
     uuid?: string,
     exit?: number,
-    date?: Date,
+    date?: Date | string,
 }

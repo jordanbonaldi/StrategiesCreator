@@ -118,4 +118,19 @@ export default new class BinanceAlgorithmTests {
             callback(foundStrategy.launchBootstrapStrategy(candles, binanceProperties.timeframe));
         });
     }
+
+    /**
+     *
+     * @param strategy
+     * @param binanceProperties
+     * @param callback
+     */
+    runBackTestsOnProductionAPIAsset(strategy: string, binanceProperties: BinanceProperties, callback: (strategy: StrategyResult) => void): void {
+        this.binanceAPI.socketWatcher(binanceProperties.asset, binanceProperties.timeframe, true, (candles: CandleModel[]) => {
+            let foundStrategy: Strategy<& StrategyParams, & Persistence> | undefined = StrategyHandler.getStrategyByName(strategy);
+            if (foundStrategy == null) return Error('Strategy not found');
+
+            callback(foundStrategy.tryStrategy(candles, binanceProperties.timeframe));
+        });
+    }
 }
