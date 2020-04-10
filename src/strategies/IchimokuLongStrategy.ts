@@ -17,33 +17,25 @@ export class IchimokuLongInput implements StrategyParams {
         spanPeriod: 60,
         displacement: 30
     };
-    entry = {
-        entryCrossTKBull: true,
-        entryPriceAboveTenkan: true,
-        entryPriceAboveKijun: true,
-        entryPriceAboveKumo: true,
-        entryChikuAbovePrice: true,
-        entryChikuAboveTenkan: true,
-        entryChikuAboveKijun: true,
-        entryChikuAboveKumo: false,
-        entryFuturBright: true,
+    entryLong = {
+        entryPrice: "11111",
+        entryChiku: "1110",
     };
-    exit = {
-        exitCrossTKBear: false,
-        exitPriceUnderTenkan: false,
-        exitPriceUnderKijun: false,
-        exitPriceUnderKumo: false,
-        exitChikuUnderPrice: false,
-        exitChikuUnderTenkan: false,
-        exitChikuUnderKijun: false,
-        exitChikuUnderKumo: false,
-        exitFuturDark: true,
-        exitXma: false,
-        xmaPeriod: 21
+    exitLong = {
+        exitPrice: "10001",
+        exitChiku: "0000",
+    };
+    entryShort = {
+        entryPrice: "11111",
+        entryChiku: "1110",
+    };
+    exitShort = {
+        exitPrice: "10001",
+        exitChiku: "0000",
     };
     misc = {
         long: true,
-        short: false,
+        short: true,
     };
 }
 
@@ -79,62 +71,93 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         let lastIchi = reverseIndex(myIchi);
         let lagIchi = reverseIndex(myIchi, params.ichimokuInput.displacement);
         let lagLagIchi = reverseIndex(myIchi, params.ichimokuInput.displacement * 2 - 1);
-
-        let isAboveTenkan: boolean = params.entry.entryPriceAboveTenkan ? lastCandle.close > lastIchi.conversion : true;
-        let isAboveKijun: boolean = params.entry.entryPriceAboveKijun ? lastCandle.close > lastIchi.base : true;
-        let isCrossTKBull: boolean = params.entry.entryCrossTKBull ? lastIchi.conversion > lastIchi.base : true;
         let kumoMax: number = Math.max(lagIchi.spanA, lagIchi.spanB);
         let kumoMaxPast: number = Math.max(lagLagIchi.spanA, lagLagIchi.spanB);
-        let isAboveKumo: boolean = params.entry.entryPriceAboveKumo ? lastCandle.close > kumoMax : true;
-        let isFuturBright: boolean = params.entry.entryFuturBright ? lastIchi.spanA >= lastIchi.spanB : true;
-        let isChikuAbovePrice: boolean = params.entry.entryChikuAbovePrice ? lastCandle.close > Math.max(lagCandle.open, lagCandle.close) : true;
-        let isChikuAboveTenkan: boolean = params.entry.entryChikuAboveTenkan ? lastCandle.close > lagIchi.conversion : true;
-        let isChikuAboveKijun: boolean = params.entry.entryChikuAboveKijun ? lastCandle.close > lagIchi.base : true;
-        let isChikuAboveKumo: boolean = params.entry.entryChikuAboveKumo ? lastCandle.close > kumoMaxPast : true;
+        let kumoMin: number = Math.min(lagIchi.spanA, lagIchi.spanB);
+        let kumoMinPast: number = Math.min(lagLagIchi.spanA, lagLagIchi.spanB);
 
-        let exitIsUnderTenkan: boolean = params.exit.exitPriceUnderTenkan ? lastCandle.close < lastIchi.conversion : true;
-        let exitIsUnderKijun: boolean = params.exit.exitPriceUnderKijun ? lastCandle.close < lastIchi.base : true;
-        let exitIsCrossTKBear: boolean = params.exit.exitCrossTKBear ? lastIchi.conversion <= lastIchi.base : true;
-        let exitIsUnderKumo: boolean = params.exit.exitPriceUnderKumo ? lastCandle.close < kumoMax : true;
-        let exitIsFuturDark: boolean = params.exit.exitFuturDark ? lastIchi.spanA <= lastIchi.spanB : true;
-        let exitIsChikuUnderPrice: boolean = params.exit.exitChikuUnderPrice ? lastCandle.close < Math.min(lagCandle.open, lagCandle.close) : true;
-        let exitIsChikuUnderTenkan: boolean = params.exit.exitChikuUnderTenkan ? lastCandle.close < lagIchi.conversion : true;
-        let exitIsChikuUnderKijun: boolean = params.exit.exitChikuUnderKijun ? lastCandle.close < lagIchi.base : true;
-        let exitIsChikuUnderKumo: boolean = params.exit.exitChikuUnderKumo ? lastCandle.close < kumoMaxPast : true;
+        let isCrossTKBull: boolean = lastIchi.conversion >= lastIchi.base;
+        let isAboveTenkan: boolean = lastCandle.close > lastIchi.conversion;
+        let isAboveKijun: boolean = lastCandle.close > lastIchi.base;
+        let isAboveKumo: boolean = lastCandle.close > kumoMax;
+        let isFuturBright: boolean = lastIchi.spanA >= lastIchi.spanB;
+        let isChikuAbovePrice: boolean = lastCandle.close > Math.max(lagCandle.open, lagCandle.close);
+        let isChikuAboveTenkan: boolean = lastCandle.close > lagIchi.conversion;
+        let isChikuAboveKijun: boolean = lastCandle.close > lagIchi.base;
+        let isChikuAboveKumo: boolean = lastCandle.close > kumoMaxPast;
 
-        let entryOneCond: boolean = params.entry.entryCrossTKBull || params.entry.entryPriceAboveTenkan || params.entry.entryPriceAboveKijun || params.entry.entryPriceAboveKumo || params.entry.entryChikuAbovePrice || params.entry.entryChikuAboveTenkan || params.entry.entryChikuAboveKijun || params.entry.entryChikuAboveKumo || params.entry.entryFuturBright;
-        let longCond: boolean = entryOneCond && isCrossTKBull && isAboveKijun && isAboveTenkan && isAboveKumo && isChikuAbovePrice && isChikuAboveTenkan && isChikuAboveKijun && isChikuAboveKumo && isFuturBright;
+        let isCrossTKBear: boolean = lastIchi.conversion <= lastIchi.base;
+        let isUnderTenkan: boolean = lastCandle.close < lastIchi.conversion;
+        let isUnderKijun: boolean = lastCandle.close < lastIchi.base;
+        let isUnderKumo: boolean = lastCandle.close < kumoMin;
+        let isFuturDark: boolean = lastIchi.spanA <= lastIchi.spanB;
+        let isChikuUnderPrice: boolean = lastCandle.close < Math.min(lagCandle.open, lagCandle.close);
+        let isChikuUnderTenkan: boolean = lastCandle.close < lagIchi.conversion;
+        let isChikuUnderKijun: boolean = lastCandle.close < lagIchi.base;
+        let isChikuUnderKumo: boolean = lastCandle.close < kumoMinPast;
 
-        let exitOneCond: boolean = params.exit.exitCrossTKBear || params.exit.exitPriceUnderTenkan || params.exit.exitPriceUnderKijun || params.exit.exitPriceUnderKumo || params.exit.exitChikuUnderPrice || params.exit.exitChikuUnderTenkan || params.exit.exitChikuUnderKijun || params.exit.exitChikuUnderKumo || params.exit.exitFuturDark;
-        let exitCond: boolean = exitOneCond && (exitIsCrossTKBear && exitIsUnderTenkan && exitIsUnderKijun && exitIsUnderKumo && exitIsChikuUnderPrice && exitIsChikuUnderTenkan && exitIsChikuUnderKijun && exitIsChikuUnderKumo && exitIsFuturDark);
+        let entryLongIsCrossTKBull: boolean = params.entryLong.entryPrice[0] === '1' ? isCrossTKBull : true;
+        let entryLongIsAboveTenkan: boolean = params.entryLong.entryPrice[1] === '1' ? isAboveTenkan : true;
+        let entryLongIsAboveKijun: boolean = params.entryLong.entryPrice[2] === '1' ? isAboveKijun : true;
+        let entryLongIsAboveKumo: boolean = params.entryLong.entryPrice[3] === '1' ? isAboveKumo : true;
+        let entryLongIsFuturBrigth: boolean = params.entryLong.entryPrice[4] === '1' ? isFuturBright : true;
+        let entryLongIsChikuAbovePrice: boolean = params.entryLong.entryChiku[0] === '1' ? isChikuAbovePrice : true;
+        let entryLongIsChikuAboveTenkan: boolean = params.entryLong.entryChiku[1] === '1' ? isChikuAboveTenkan : true;
+        let entryLongIsChikuAboveKijun: boolean = params.entryLong.entryChiku[2] === '1' ? isChikuAboveKijun : true;
+        let entryLongIsChikuAboveKumo: boolean = params.entryLong.entryChiku[3] === '1' ? isChikuAboveKumo : true;
+
+        let exitLongIsCrossTKBear: boolean = params.exitLong.exitPrice[0] === '1' ? isCrossTKBear : false;
+        let exitLongIsUnderTenkan: boolean = params.exitLong.exitPrice[1] === '1' ? isUnderTenkan : false;
+        let exitLongIsUnderKijun: boolean = params.exitLong.exitPrice[2] === '1' ? isUnderKijun : false;
+        let exitLongIsUnderKumo: boolean = params.exitLong.exitPrice[3] === '1' ? isUnderKumo : false;
+        let exitLongIsFuturDark: boolean = params.exitLong.exitPrice[4] === '1' ? isFuturDark : false;
+        let exitLongIsChikuUnderPrice: boolean = params.exitLong.exitChiku[0] === '1' ? isChikuUnderPrice : false;
+        let exitLongIsChikuUnderTenkan: boolean = params.exitLong.exitChiku[1] === '1' ? isChikuUnderTenkan : false;
+        let exitLongIsChikuUnderKijun: boolean = params.exitLong.exitChiku[2] === '1' ? isChikuUnderKijun : false;
+        let exitLongIsChikuUnderKumo: boolean = params.exitLong.exitChiku[3] === '1' ? isChikuUnderKumo : false;
+
+        let entryShortIsCrossTKBear: boolean = params.entryShort.entryPrice[0] === '1' ? isCrossTKBear : true;
+        let entryShortIsUnderTenkan: boolean = params.entryShort.entryPrice[1] === '1' ? isUnderTenkan : true;
+        let entryShortIsUnderKijun: boolean = params.entryShort.entryPrice[2] === '1' ? isUnderKijun : true;
+        let entryShortIsUnderKumo: boolean = params.entryShort.entryPrice[3] === '1' ? isUnderKumo : true;
+        let entryShortIsFuturDark: boolean = params.entryShort.entryPrice[4] === '1' ? isFuturDark : true;
+        let entryShortIsChikuUnderPrice: boolean = params.entryShort.entryChiku[0] === '1' ? isChikuUnderPrice : true;
+        let entryShortIsChikuUnderTenkan: boolean = params.entryShort.entryChiku[1] === '1' ? isChikuUnderTenkan : true;
+        let entryShortIsChikuUnderKijun: boolean = params.entryShort.entryChiku[2] === '1' ? isChikuUnderKijun : true;
+        let entryShortIsChikuUnderKumo: boolean = params.entryShort.entryChiku[3] === '1' ? isChikuUnderKumo : true;
+
+        let exitShortIsCrossTKBull: boolean = params.exitShort.exitPrice[0] === '1' ? isCrossTKBull : false;
+        let exitShortIsAboveTenkan: boolean = params.exitShort.exitPrice[1] === '1' ? isAboveTenkan : false;
+        let exitShortIsAboveKijun: boolean = params.exitShort.exitPrice[2] === '1' ? isAboveKijun : false;
+        let exitShortIsAboveKumo: boolean = params.exitShort.exitPrice[3] === '1' ? isAboveKumo : false;
+        let exitShortIsFuturBright: boolean = params.exitShort.exitPrice[4] === '1' ? isFuturBright : false;
+        let exitShortIsChikuAbovePrice: boolean = params.exitShort.exitChiku[0] === '1' ? isChikuAbovePrice : false;
+        let exitShortIsChikuAboveTenkan: boolean = params.exitShort.exitChiku[1] === '1' ? isChikuAboveTenkan : false;
+        let exitShortIsChikuAboveKijun: boolean = params.exitShort.exitChiku[2] === '1' ? isChikuAboveKijun : false;
+        let exitShortIsChikuAboveKumo: boolean = params.exitShort.exitChiku[3] === '1' ? isChikuAboveKumo : false;
+
+        let entryLongOneCond: boolean = params.entryLong.entryPrice.includes('1') || params.entryLong.entryChiku.includes('1')
+        let entryLongCond: boolean = entryLongOneCond && entryLongIsCrossTKBull && entryLongIsAboveTenkan && entryLongIsAboveKijun && entryLongIsAboveKumo && entryLongIsFuturBrigth && entryLongIsChikuAbovePrice && entryLongIsChikuAboveTenkan && entryLongIsChikuAboveKijun && entryLongIsChikuAboveKumo;
+
+        let exitLongOneCond: boolean = params.exitLong.exitPrice.includes('1') || params.exitLong.exitPrice.includes('1')
+        let exitLongCond: boolean = exitLongOneCond && (exitLongIsCrossTKBear || exitLongIsUnderTenkan || exitLongIsUnderKijun || exitLongIsUnderKumo || exitLongIsChikuUnderPrice || exitLongIsChikuUnderTenkan || exitLongIsChikuUnderKijun || exitLongIsChikuUnderKumo || exitLongIsFuturDark);
         let stopLossLong: number = params.useStopLoss ? lastCandle.close * (1 - params.stopPercentage / 100) : 0;
+
+        let entryShortOneCond: boolean = params.entryShort.entryPrice.includes('1') || params.entryShort.entryChiku.includes('1')
+        let entryshortCond: boolean = entryShortOneCond && entryShortIsCrossTKBear && entryShortIsUnderTenkan && entryShortIsUnderKijun && entryShortIsUnderKumo && entryShortIsFuturDark && entryShortIsChikuUnderPrice && entryShortIsChikuUnderTenkan && entryShortIsChikuUnderKijun && entryShortIsChikuUnderKumo;
+
+        let exitShortOneCond: boolean = params.exitShort.exitPrice.includes('1') || params.exitShort.exitPrice.includes('1')
+        let exitShortCond: boolean = exitShortOneCond && (exitShortIsCrossTKBull || exitShortIsAboveTenkan || exitShortIsAboveKijun || exitShortIsAboveKumo || exitShortIsFuturBright || exitShortIsChikuAbovePrice || exitShortIsChikuAboveTenkan || exitShortIsChikuAboveKijun || exitShortIsChikuAboveKumo);
+        let stopLossShort: number = params.useStopLoss ? lastCandle.close * (1 + params.stopPercentage / 100) : 0;
 
         let currentTrade: Trade | undefined = undefined
 
-        if (!trade && longCond) {
-            console.log("isAboveTenkan: " + isAboveTenkan);
-            console.log("isAboveKijun: " + isAboveKijun);
-            console.log("isCrossTKBull: " + isCrossTKBull);
-            console.log("kumoMax: " + kumoMax);
-            console.log("kumoMaxPast: " + kumoMaxPast);
-            console.log("isAboveKumo: " + isAboveKumo);
-            console.log("isFuturBright: " + isFuturBright);
-            console.log("isChikuAbovePrice: " + isChikuAbovePrice);
-            console.log("isChikuAboveTenkan: " + isChikuAboveTenkan);
-            console.log("isChikuAboveKijun: " + isChikuAboveKijun);
-            console.log("isChikuAboveKumo: " + isChikuAboveKumo);
-            console.log(lagCandle)
-            console.log("longCond: " + longCond);
-            console.log()
-            console.log()
-        }
-
         if (!trade)
-            currentTrade = longCond ? {
+            currentTrade = (params.misc.long && entryLongCond && !exitLongCond) || (params.misc.short && entryshortCond && !exitShortCond) ? {
                 entryType: EntryType.ENTRY,
-                type: TradeTypes.LONG,
+                type: entryLongCond ? TradeTypes.LONG : TradeTypes.SHORT,
                 price: lastCandle.close,
-                stoploss: stopLossLong,
+                stoploss: entryLongCond ? stopLossLong : stopLossShort,
                 exitType: ExitTypes.PROFIT,
                 asset: this.defaultParams.asset,
                 timeframe: timeFrame,
@@ -148,16 +171,36 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                     price: trade.stoploss, //liveCandle.close
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
-                    asset: this.defaultParams.asset,
+                    asset: params.asset,
                     timeframe: timeFrame,
                     date: new Date()
-                } : exitCond ? {
+                } : exitLongCond ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
                     price: lastCandle.close,
                     stoploss: 0,
                     exitType: trade.price < lastCandle.close ? ExitTypes.PROFIT : ExitTypes.LOSS,
-                    asset: this.defaultParams.asset,
+                    asset: params.asset,
+                    timeframe: timeFrame,
+                    date: new Date()
+                } : undefined
+            ) : trade.type === TradeTypes.SHORT ? (
+                params.useStopLoss && trade.stoploss < lastCandle.high ? { //liveCandle.close
+                    entryType: EntryType.EXIT,
+                    type: TradeTypes.SHORT,
+                    price: trade.stoploss, //liveCandle.close
+                    stoploss: 0,
+                    exitType: ExitTypes.STOPLOSS,
+                    asset: params.asset,
+                    timeframe: timeFrame,
+                    date: new Date()
+                } : exitShortCond ? {
+                    entryType: EntryType.EXIT,
+                    type: TradeTypes.SHORT,
+                    price: lastCandle.close,
+                    stoploss: 0,
+                    exitType: trade.price > lastCandle.close ? ExitTypes.PROFIT : ExitTypes.LOSS,
+                    asset: params.asset,
                     timeframe: timeFrame,
                     date: new Date()
                 } : undefined
