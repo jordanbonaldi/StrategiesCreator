@@ -12,10 +12,10 @@ export class IchimokuLongInput implements StrategyParams {
     stopPercentage: number = 5;
     useStopLoss: boolean = true;
     ichimokuInput = {
-        conversionPeriod: 9,
-        basePeriod: 26,
-        spanPeriod: 52,
-        displacement: 26
+        conversionPeriod: 10,
+        basePeriod: 30,
+        spanPeriod: 60,
+        displacement: 30
     };
     entry = {
         entryCrossTKBull: true,
@@ -25,11 +25,11 @@ export class IchimokuLongInput implements StrategyParams {
         entryChikuAbovePrice: true,
         entryChikuAboveTenkan: true,
         entryChikuAboveKijun: true,
-        entryChikuAboveKumo: true,
+        entryChikuAboveKumo: false,
         entryFuturBright: true,
     };
     exit = {
-        exitCrossTKBear: true,
+        exitCrossTKBear: false,
         exitPriceUnderTenkan: false,
         exitPriceUnderKijun: false,
         exitPriceUnderKumo: false,
@@ -37,7 +37,7 @@ export class IchimokuLongInput implements StrategyParams {
         exitChikuUnderTenkan: false,
         exitChikuUnderKijun: false,
         exitChikuUnderKumo: false,
-        exitFuturDark: false,
+        exitFuturDark: true,
         exitXma: false,
         xmaPeriod: 21
     };
@@ -52,7 +52,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
         super('IchimokuLongStrategy',
             new IchimokuLongInput(),
             {
-                warm_up: 120,
+                warm_up: 121,
                 equity: 1000,
                 riskType: RiskType.PERCENT,
                 riskInTrade: 90
