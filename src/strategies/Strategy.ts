@@ -127,8 +127,7 @@ export default abstract class Strategy<T, U> {
             }
             else if (candleTrade.entryType == EntryType.EXIT && currentTrade) {
                 tradeResult = Strategy.tradeResultComputation(currentTrade, candleTrade);
-                console.log(tradeResult)
-                console.log()
+
                 equityPercent = ((currentTrade.type === TradeTypes.LONG ? tradeResult.pricePercent : - tradeResult.pricePercent) / 100);
                 if (backTestParams.riskType === RiskType.PERCENT) {
                     currentEquity += (currentEquity * backTestParams.riskInTrade / 100) * equityPercent;

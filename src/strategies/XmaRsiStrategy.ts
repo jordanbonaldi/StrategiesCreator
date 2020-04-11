@@ -17,7 +17,7 @@ export class XmaRsiInput implements StrategyParams {
         useAntiLag: true,
         xmaAntiLagPeriod: 7
     };
-    stopPercentage: number = 2.5;
+    stopPercentage: number = 5;
     useStopLoss: boolean = true;
     useHaCandle: boolean = true;
 }
@@ -29,7 +29,7 @@ export interface XmaPersistence extends Persistence {
 export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersistence> {
     constructor() {
         super('XmaRsiStrategy', new XmaRsiInput(), {
-            equity: 10000, riskInTrade: 90, riskType: RiskType.PERCENT, warm_up: 70
+            equity: 10000, riskInTrade: 40, riskType: RiskType.PERCENT, warm_up: 70
         });
 
         this.backTestParams.warm_up = this.defaultParams.data.xmaPeriod > this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod ? this.defaultParams.data.xmaPeriod : this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod;
@@ -116,10 +116,10 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
             } : undefined;
         else
             currentTrade = trade.type === TradeTypes.LONG ? (
-                params.useStopLoss && trade.stoploss > lastCandle.low ? { //liveCandle.close
+                params.useStopLoss && trade.stoploss > lastCandle.low ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
-                    price: trade.stoploss, //liveCandle.close
+                    price: trade.stoploss,
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,
@@ -136,10 +136,10 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     date: new Date()
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
-                params.useStopLoss && trade.stoploss < lastCandle.high ? { //liveCandle.close
+                params.useStopLoss && trade.stoploss < lastCandle.high ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
-                    price: trade.stoploss, //liveCandle.close
+                    price: trade.stoploss,
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,
