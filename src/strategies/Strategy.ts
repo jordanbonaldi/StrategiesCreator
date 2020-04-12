@@ -15,6 +15,11 @@ export interface StrategyParams {
     stopPercentage: number;
 }
 
+export interface StrategyTradeInterface {
+    entryTrade: Trade,
+    exitTrade: Trade | undefined;
+}
+
 export interface Persistence { }
 
 export default abstract class Strategy<T, U> {
@@ -63,20 +68,6 @@ export default abstract class Strategy<T, U> {
 
     /**
      *
-     * @param entryTrade
-     * @param exitTrade
-     */
-    private static tradeResultComputation(entryTrade: Trade, exitTrade: Trade): TradeResult {
-        return {
-            entryTrade: entryTrade,
-            exitTrade: exitTrade,
-            pricePercent: (exitTrade.price - entryTrade.price) / entryTrade.price * 100,
-            tradeStatus: entryTrade.type == TradeTypes.LONG ? (entryTrade.price < exitTrade.price ? TradeStatus.WIN : entryTrade.price > exitTrade.price ? TradeStatus.LOST : TradeStatus.BREAK_EVEN) : (entryTrade.price > exitTrade.price ? TradeStatus.WIN : entryTrade.price < exitTrade.price ? TradeStatus.LOST : TradeStatus.BREAK_EVEN),
-        };
-    }
-
-    /**
-     *
      * @param callback
      */
     launchTrade(callback: () => Trade) {
@@ -86,6 +77,76 @@ export default abstract class Strategy<T, U> {
         PersistenceManager.setPersistence<T, U>(this);
 
         return trade;
+    }
+
+    /**
+     *
+     * @param entryTrade
+     * @param exitTrade
+     */
+    private static tradeResultComputation(trades: StrategyTradeInterface): TradeResult | undefined {
+        if (!trades.exitTrade)
+            return undefined;
+        return {
+            entryTrade: trades.entryTrade,
+            exitTrade: trades.exitTrade,
+            pricePercent: (trades.exitTrade.price - trades.entryTrade.price) / trades.entryTrade.price * 100,
+            tradeStatus: trades.entryTrade.type == TradeTypes.LONG ? (trades.entryTrade.price < trades.exitTrade.price ? TradeStatus.WIN : trades.entryTrade.price > trades.exitTrade.price ? TradeStatus.LOST : TradeStatus.BREAK_EVEN) : (trades.entryTrade.price > trades.exitTrade.price ? TradeStatus.WIN : trades.entryTrade.price < trades.exitTrade.price ? TradeStatus.LOST : TradeStatus.BREAK_EVEN),
+        };
+    }
+
+    computeStrategyTrades(trades: StrategyTradeInterface[]): StrategyResult {
+        let strategyResult: StrategyResult = {
+            total: 0,
+            totalLong: 0,
+            totalShort: 0,
+            win: 0,
+            lost: 0,
+            equityPercent: 0,
+            maxDrawDown: 0,
+            maxLosingStreak: 0,
+            tradeResults: [],
+            asset: this.defaultParams.asset,
+            timeframe: this.defaultParams.timeframe
+        };
+        let equity = 1000;
+        let riskInTrade = 90;
+        let currentEquity: number = equity, losingStreak = 0, saveEquity = equity, drawDown = 0, equityPercent = 0, prevEquity = saveEquity;
+        let tradeResult: TradeResult | undefined;
+
+        trades.forEach(trade => {
+            tradeResult = Strategy.tradeResultComputation(trade);
+            if (tradeResult) {
+                equityPercent = ((trade.entryTrade.type === TradeTypes.LONG ? tradeResult.pricePercent : - tradeResult.pricePercent) / 100);
+                //if (backTestParams.riskType === RiskType.PERCENT) {
+                currentEquity += (currentEquity * riskInTrade / 100) * equityPercent;
+                // } else {
+                //     currentEquity += backTestParams.riskInTrade * equityPercent;
+                // }
+
+                if (tradeResult.tradeStatus === TradeStatus.LOST) {
+                    losingStreak++;
+                } else if (tradeResult.tradeStatus === TradeStatus.WIN) {
+                    drawDown = (saveEquity - prevEquity) / saveEquity * 100;
+                    strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
+                    strategyResult.maxLosingStreak = losingStreak > strategyResult.maxLosingStreak ? losingStreak : strategyResult.maxLosingStreak;
+                    saveEquity = currentEquity;
+                    losingStreak = 0;
+                    drawDown = 0;
+                }
+                prevEquity = currentEquity;
+
+                strategyResult.total++;
+                trade.entryTrade.type === TradeTypes.LONG ? strategyResult.totalLong++ : strategyResult.totalShort++;
+                tradeResult.tradeStatus == TradeStatus.WIN ? strategyResult.win++ : strategyResult.lost++;
+                strategyResult.tradeResults.push(tradeResult);
+            }
+        });
+
+        drawDown = (saveEquity - prevEquity) / saveEquity * 100;
+        strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
+        strategyResult.equityPercent = (currentEquity - equity) / equity * 100;
+        return strategyResult;
     }
 
     /**
@@ -101,22 +162,8 @@ export default abstract class Strategy<T, U> {
         backTestParams: BackTestParams = this.backTestParams,
         params: T & StrategyParams = this.defaultParams
     ): StrategyResult {
-        let strategyResult: StrategyResult = {
-            total: 0,
-            totalLong: 0,
-            totalShort: 0,
-            win: 0,
-            lost: 0,
-            equityPercent: 0,
-            maxDrawDown: 0,
-            maxLosingStreak: 0,
-            tradeResults: [],
-            asset: this.defaultParams.asset,
-            timeframe: this.defaultParams.timeframe
-        };
-        let tradeResult: TradeResult;
+        let strategyTrades: StrategyTradeInterface[] = [];
         let currentTrade: Trade | undefined = undefined, candleTrade = undefined;
-        let currentEquity: number = backTestParams.equity, losingStreak = 0, saveEquity = backTestParams.equity, drawDown = 0, equityPercent = 0, prevEquity = saveEquity;
 
         for (let a = backTestParams.warm_up; a < candles.length; a++) {
             let candleTrade: Trade = this.launchTrade(() => this.launchStrategy(
@@ -126,38 +173,10 @@ export default abstract class Strategy<T, U> {
                 currentTrade = candleTrade;
             }
             else if (candleTrade.entryType == EntryType.EXIT && currentTrade) {
-                tradeResult = Strategy.tradeResultComputation(currentTrade, candleTrade);
-
-                equityPercent = ((currentTrade.type === TradeTypes.LONG ? tradeResult.pricePercent : - tradeResult.pricePercent) / 100);
-                if (backTestParams.riskType === RiskType.PERCENT) {
-                    currentEquity += (currentEquity * backTestParams.riskInTrade / 100) * equityPercent;
-                } else {
-                    currentEquity += backTestParams.riskInTrade * equityPercent;
-                }
-
-                if (tradeResult.tradeStatus === TradeStatus.LOST) {
-                    losingStreak++;
-                } else if (tradeResult.tradeStatus === TradeStatus.WIN) {
-                    drawDown = (saveEquity - prevEquity) / saveEquity * 100;
-                    strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
-                    strategyResult.maxLosingStreak = losingStreak > strategyResult.maxLosingStreak ? losingStreak : strategyResult.maxLosingStreak;
-                    saveEquity = currentEquity;
-                    losingStreak = 0;
-                    drawDown = 0;
-                }
-                prevEquity = currentEquity;
-
-                strategyResult.total++;
-                currentTrade.type === TradeTypes.LONG ? strategyResult.totalLong++ : strategyResult.totalShort++;
-                tradeResult.tradeStatus == TradeStatus.WIN ? strategyResult.win++ : strategyResult.lost++;
-                strategyResult.tradeResults.push(tradeResult);
+                strategyTrades.push({ entryTrade: currentTrade, exitTrade: candleTrade });
                 currentTrade = undefined;
             }
         }
-        drawDown = (saveEquity - prevEquity) / saveEquity * 100;
-        strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
-        strategyResult.equityPercent = (currentEquity - backTestParams.equity) / backTestParams.equity * 100;
-        strategyResult.tradeResults = [];
-        return strategyResult;
+        return this.computeStrategyTrades(strategyTrades)
     }
 }
