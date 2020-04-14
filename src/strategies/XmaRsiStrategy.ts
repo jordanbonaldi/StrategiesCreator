@@ -23,7 +23,8 @@ export class XmaRsiInput implements StrategyParams {
 }
 
 export interface XmaPersistence extends Persistence {
-    value: number;
+    value?: number;
+    currentTrade?: Trade;
 }
 
 export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersistence> {
@@ -99,10 +100,6 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
 
         let currentTrade: Trade | undefined = undefined;
 
-        if (!this.data)
-            this.data = { value: 0 };
-        this.data.value += 1;
-
         if (!trade)
             currentTrade = entryShortCond || entryLongCond ? {
                 entryType: EntryType.ENTRY,
@@ -156,6 +153,15 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                     date: new Date()
                 } : undefined
             ) : undefined;
+
+        if (currentTrade && currentTrade.entryType == EntryType.ENTRY) {
+            if (!this.data?.currentTrade || (this.data.currentTrade.type != currentTrade.type
+                && this.data.currentTrade.price != currentTrade.price))
+                this.data = { currentTrade: currentTrade };
+            else if (this.data.currentTrade.type == currentTrade.type
+                && this.data.currentTrade.price == currentTrade.price)
+                currentTrade = undefined;
+        }
 
         return currentTrade ? currentTrade : {
             entryType: EntryType.NOTHING,
