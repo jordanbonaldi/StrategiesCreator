@@ -6,6 +6,7 @@ import TradeResult, { TradeStatus } from "../entity/TradeResult";
 import Trade from "../entity/Trade";
 import { EntryType, TradeTypes } from "../entity/TradeTypes";
 import PersistenceManager, { PersistenceAllowanceInterface } from "../handlers/PersistenceHandler";
+import { ExitTypes } from "../entity/ExitTypes";
 
 
 export interface StrategyParams {
@@ -20,7 +21,9 @@ export interface StrategyTradeInterface {
     exitTrade: Trade | undefined;
 }
 
-export interface Persistence { }
+export interface Persistence {
+    currentTrade: Trade | undefined
+}
 
 export default abstract class Strategy<T, U> {
 
@@ -28,7 +31,7 @@ export default abstract class Strategy<T, U> {
     defaultParams !: T & StrategyParams;
     backTestParams !: BackTestParams;
 
-    data: U | undefined;
+    data: U & Persistence | undefined;
 
     /**
      *
@@ -71,10 +74,28 @@ export default abstract class Strategy<T, U> {
      * @param callback
      */
     launchTrade(callback: () => Trade) {
-        let pai: PersistenceAllowanceInterface<T, U> | undefined = PersistenceManager.getPersistence<T, U>(this);
+        let pai: PersistenceAllowanceInterface<T, U & Persistence> | undefined = PersistenceManager.getPersistence<T, U & any>(this);
         this.data = pai == null ? undefined : pai.data;
         let trade: Trade = callback();
         PersistenceManager.setPersistence<T, U>(this);
+
+
+        if (trade !== undefined &&
+            trade.entryType == EntryType.ENTRY
+        ) {
+            if (
+                (this.data === undefined || this.data.currentTrade === undefined) ||
+                (this.data.currentTrade.type !== trade.type || this.data.currentTrade.price !== trade.price))
+                this.data = this.data === undefined ? { currentTrade: trade } as U & Persistence : {
+                    ...this.data,
+                    currentTrade: trade
+                };
+            else if (this.data.currentTrade.type == trade.type
+                && this.data.currentTrade.price == trade.price)
+                trade.entryType = EntryType.NOTHING;
+            else
+                this.data.currentTrade === undefined
+        }
 
         return trade;
     }
