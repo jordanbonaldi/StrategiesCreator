@@ -81,13 +81,10 @@ export default abstract class Strategy<T, U> {
 
     /**
      *
-     * @param entryTrade
-     * @param exitTrade
+     * @param trades
      */
     private static tradeResultComputation(trades: StrategyTradeInterface): TradeResult | undefined {
-        if (!trades.exitTrade)
-            return undefined;
-        return {
+        return !trades.exitTrade ? undefined : {
             entryTrade: trades.entryTrade,
             exitTrade: trades.exitTrade,
             pricePercent: (trades.exitTrade.price - trades.entryTrade.price) / trades.entryTrade.price * 100,
@@ -95,7 +92,7 @@ export default abstract class Strategy<T, U> {
         };
     }
 
-    computeStrategyTrades(trades: StrategyTradeInterface[]): StrategyResult {
+    public static computeStrategyTrades(trades: StrategyTradeInterface[], asset: string, timeframe: string[]): StrategyResult {
         let strategyResult: StrategyResult = {
             total: 0,
             totalLong: 0,
@@ -106,8 +103,8 @@ export default abstract class Strategy<T, U> {
             maxDrawDown: 0,
             maxLosingStreak: 0,
             tradeResults: [],
-            asset: this.defaultParams.asset,
-            timeframe: this.defaultParams.timeframe
+            asset: asset,
+            timeframe: timeframe
         };
         let equity = 1000;
         let riskInTrade = 90;
@@ -177,6 +174,6 @@ export default abstract class Strategy<T, U> {
                 currentTrade = undefined;
             }
         }
-        return this.computeStrategyTrades(strategyTrades)
+        return Strategy.computeStrategyTrades(strategyTrades, this.defaultParams.asset, this.defaultParams.timeframe)
     }
 }
