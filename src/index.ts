@@ -1,5 +1,5 @@
 import Config from "../config/Config";
-import Strategy, {Persistence, StrategyParams} from "./strategies/Strategy";
+import Strategy, {Persistence, StrategyParams, StrategyTradeInterface} from "./strategies/Strategy";
 import StrategyHandler from "./handlers/StrategyHandler";
 import StrategyResult from "./entity/StrategyResult";
 import Trade from "./entity/Trade"
@@ -14,6 +14,7 @@ export {
     PersistenceHandler as PersistenceHandler,
     PersistenceAllowanceInterface as PersistenceAllowanceInterface,
     Strategy as Strategy,
+    StrategyTradeInterface as StrategyTradeInterface,
     StrategyResult as StrategyResult,
     StrategyParams as StrategyParams,
     Persistence as Persistence,

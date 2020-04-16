@@ -1,5 +1,5 @@
 import Strategy, { Persistence, StrategyParams } from "./Strategy";
-import { Alma, sma, reverseIndex, rsi, Zlema, atr } from "@jordanbonaldi/indicatorsapi";
+import { Alma, sma, reverseIndex, rsi, Zlema, atr, HeikinAshi, Smma, CandleCheck } from "@jordanbonaldi/indicatorsapi";
 import { CandleModel } from "@jordanbonaldi/binancefetcher";
 import { RiskType } from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
@@ -46,51 +46,8 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
      * @param timeFrame
      * @param params params taken
      */
-
-    smma(input: any): number[] {
-        var smmaData: number[] = []
-        var smaData: number[] = sma(input);//sma({ values: input.values.slice(-input.period * 3, input.values.length - input.period * 2), period: input.period });
-        smmaData.push(smaData[smaData.length - 1])
-        for (var a = input.period; a < input.values.length; a++) {
-            smmaData.push(
-                (smmaData[smmaData.length - 1] * (input.period - 1) + input.values[a]) / input.period
-            );
-        }
-        return smmaData;
-    }
-
-    heikinAshi(input: CandleModel[]): CandleModel[] {
-        let haCandles: CandleModel[] = [];
-        haCandles.push(input[0])
-        for (let a: number = 1; a < input.length; a++) {
-            let open: number = (haCandles[a - 1].open + haCandles[a - 1].close) / 2;
-            let close: number = (input[a].open + input[a].close + input[a].low + input[a].high) / 4;
-            haCandles.push({
-                open: open,
-                close: close,
-                high: Math.max(input[a].high, open, close),
-                low: Math.min(input[a].low, open, close),
-                volume: input[a].volume,
-                isFinal: input[a].isFinal
-            })
-        }
-        return haCandles
-    }
-
-    isSameCandle(candle1: CandleModel | undefined, candle2: CandleModel | undefined): boolean {
-        if (candle1 === undefined || candle2 === undefined)
-            return false;
-        else if (candle1.close === candle2.close &&
-            candle1.open === candle2.open &&
-            candle1.low === candle2.low &&
-            candle1.high === candle2.high &&
-            candle1.volume === candle2.volume)
-            return true;
-        return false;
-    }
-
     launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: XmaRsiInput & StrategyParams): Trade {
-        let source: CandleModel[] = params.useHaCandle ? this.heikinAshi(candles) : candles;
+        let source: CandleModel[] = params.useHaCandle ? HeikinAshi(candles) : candles;
         let lastCandle: CandleModel = reverseIndex(candles, 1);
         let liveCandle: CandleModel = reverseIndex(candles);
 
@@ -100,7 +57,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
         let myXma: number[] = Alma({ period: params.data.xmaPeriod, values: indicatorsCandles, offset: 0.5, sigma: 6 });
         let myRsi = rsi({ period: params.data.rsiPeriod, values: rsiCandles });
         let myXmaRsi = Zlema({ period: params.data.xmaRsiPeriod, values: myRsi });
-        let myXmaAntiLag = this.smma({ period: params.data.xmaAntiLagPeriod, values: indicatorsCandles })
+        let myXmaAntiLag = Smma({ period: params.data.xmaAntiLagPeriod, values: indicatorsCandles });
         // let myAtr = atr({
         //     low: source.map(c => c.low),
         //     high: source.map(c => c.high),
@@ -110,7 +67,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
 
         let isXmaBull = reverseIndex(myXma) > reverseIndex(myXma, 1);
         let isXmaRsiBull = reverseIndex(myXmaRsi) > reverseIndex(myXmaRsi, 1);
-        let isXmaAntiLagBull = reverseIndex(myXmaAntiLag) > reverseIndex(myXmaAntiLag, 1)
+        let isXmaAntiLagBull = reverseIndex(myXmaAntiLag) > reverseIndex(myXmaAntiLag, 1);
 
         let entryLongCond = isXmaBull && isXmaRsiBull && isXmaAntiLagBull;
         let entryShortCond = !isXmaBull && !isXmaRsiBull && !isXmaAntiLagBull;
@@ -137,7 +94,7 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
                 entryCandle: lastCandle
             };
         }
-        else if (this.isSameCandle(this.data?.entryCandle, lastCandle) === false)
+        else if (!CandleCheck(this.data?.entryCandle, lastCandle))
             currentTrade = trade.type === TradeTypes.LONG ? (
                 params.useStopLoss && trade.stoploss > lastCandle.low ? {
                     entryType: EntryType.EXIT,
