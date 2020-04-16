@@ -6,7 +6,7 @@ import Trade from "../entity/Trade";
 import { EntryType, TradeTypes } from "../entity/TradeTypes";
 import { ExitTypes } from "../entity/ExitTypes";
 
-export class IchimokuLongInput implements StrategyParams {
+export class IchimokuInput implements StrategyParams {
     asset = 'BTCUSDT';
     timeframe = ['4h'];
     stopPercentage: number = 5;
@@ -35,10 +35,14 @@ export class IchimokuLongInput implements StrategyParams {
     };
 }
 
-export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput, Persistence> {
+export interface IchiPersistence extends Persistence {
+    value?: number;
+}
+
+export default new class IchimokuStrategy extends Strategy<IchimokuInput, IchiPersistence> {
     constructor() {
-        super('IchimokuLongStrategy',
-            new IchimokuLongInput(),
+        super('IchimokuStrategy',
+            new IchimokuInput(),
             {
                 warm_up: 121,
                 equity: 1000,
@@ -47,6 +51,17 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
             });
     }
 
+    isSameCandle(candle1: CandleModel | undefined, candle2: CandleModel | undefined): boolean {
+        if (candle1 === undefined || candle2 === undefined)
+            return false;
+        else if (candle1.close === candle2.close &&
+            candle1.open === candle2.open &&
+            candle1.low === candle2.low &&
+            candle1.high === candle2.high &&
+            candle1.volume === candle2.volume)
+            return true;
+        return false;
+    }
     /**
      *
      * @param candles Candle Model of type Candle
@@ -56,7 +71,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
      * @param timeFrame
      * @param params params taken
      */
-    launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: IchimokuLongInput): Trade {
+    launchStrategy(candles: CandleModel[], trade: Trade | undefined, timeFrame: string, params: IchimokuInput & StrategyParams): Trade {
         let lows: number[] = candles.map(c => Number(c.low)).slice(0, -1);
         let highs: number[] = candles.map(c => Number(c.high)).slice(0, -1);
         let myIchi = ichimokucloud({ low: lows, high: highs, conversionPeriod: params.ichimokuInput.conversionPeriod, basePeriod: params.ichimokuInput.basePeriod, displacement: params.ichimokuInput.displacement, spanPeriod: params.ichimokuInput.spanPeriod });
@@ -148,7 +163,7 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
 
         let currentTrade: Trade | undefined = undefined
 
-        if (!trade)
+        if (!trade) {
             currentTrade = (params.misc.long && entryLongCond && !exitLongCond) || (params.misc.short && entryshortCond && !exitShortCond) ? {
                 entryType: EntryType.ENTRY,
                 type: entryLongCond ? TradeTypes.LONG : TradeTypes.SHORT,
@@ -159,7 +174,12 @@ export default new class IchimokuLongStrategy extends Strategy<IchimokuLongInput
                 timeframe: timeFrame,
                 date: new Date()
             } : undefined;
-        else
+            this.data = this.data === undefined ? { entryCandle: lastCandle } as IchiPersistence & Persistence : {
+                ...this.data,
+                entryCandle: lastCandle
+            };
+        }
+        else if (this.isSameCandle(this.data?.entryCandle, lastCandle) === false)
             currentTrade = trade.type === TradeTypes.LONG ? (
                 params.useStopLoss && trade.stoploss > lastCandle.low ? { //liveCandle.close
                     entryType: EntryType.EXIT,

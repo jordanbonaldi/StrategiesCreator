@@ -22,7 +22,8 @@ export interface StrategyTradeInterface {
 }
 
 export interface Persistence {
-    currentTrade: Trade | undefined
+    currentTrade: Trade | undefined,
+    entryCandle: CandleModel | undefined
 }
 
 export default abstract class Strategy<T, U> {
@@ -77,26 +78,27 @@ export default abstract class Strategy<T, U> {
         let pai: PersistenceAllowanceInterface<T, U & Persistence> | undefined = PersistenceManager.getPersistence<T, U & any>(this);
         this.data = pai == null ? undefined : pai.data;
         let trade: Trade = callback();
-        PersistenceManager.setPersistence<T, U>(this);
-
 
         if (trade !== undefined &&
             trade.entryType == EntryType.ENTRY
         ) {
             if (
                 (this.data === undefined || this.data.currentTrade === undefined) ||
-                (this.data.currentTrade.type !== trade.type || this.data.currentTrade.price !== trade.price))
+                (this.data.currentTrade.type !== trade.type || this.data.currentTrade.price !== trade.price)) {
                 this.data = this.data === undefined ? { currentTrade: trade } as U & Persistence : {
                     ...this.data,
                     currentTrade: trade
                 };
+            }
             else if (this.data.currentTrade.type == trade.type
-                && this.data.currentTrade.price == trade.price)
+                && this.data.currentTrade.price == trade.price) {
                 trade.entryType = EntryType.NOTHING;
+            }
             else
-                this.data.currentTrade === undefined
+                this.data.currentTrade = undefined
         }
 
+        PersistenceManager.setPersistence<T, U>(this);
         return trade;
     }
 
@@ -164,6 +166,7 @@ export default abstract class Strategy<T, U> {
         drawDown = (saveEquity - prevEquity) / saveEquity * 100;
         strategyResult.maxDrawDown = drawDown > 0 && drawDown > strategyResult.maxDrawDown ? drawDown : strategyResult.maxDrawDown;
         strategyResult.equityPercent = (currentEquity - equity) / equity * 100;
+        strategyResult.tradeResults = [];
         return strategyResult;
     }
 
@@ -184,15 +187,17 @@ export default abstract class Strategy<T, U> {
         let currentTrade: Trade | undefined = undefined, candleTrade = undefined;
 
         for (let a = backTestParams.warm_up; a < candles.length; a++) {
-            let candleTrade: Trade = this.launchTrade(() => this.launchStrategy(
-                candles.slice(0, a), currentTrade, timeFrame, params
-            ));
-            if (candleTrade.entryType == EntryType.ENTRY && !currentTrade) {
-                currentTrade = candleTrade;
-            }
-            else if (candleTrade.entryType == EntryType.EXIT && currentTrade) {
-                strategyTrades.push({ entryTrade: currentTrade, exitTrade: candleTrade });
-                currentTrade = undefined;
+            for (let b = 0; b < 2; b++) {
+                let candleTrade: Trade = this.launchTrade(() => this.launchStrategy(
+                    candles.slice(0, a), currentTrade, timeFrame, params
+                ));
+                if (candleTrade.entryType == EntryType.ENTRY && !currentTrade) {
+                    currentTrade = candleTrade;
+                }
+                else if (candleTrade.entryType == EntryType.EXIT && currentTrade) {
+                    strategyTrades.push({ entryTrade: currentTrade, exitTrade: candleTrade });
+                    currentTrade = undefined;
+                }
             }
         }
         return Strategy.computeStrategyTrades(strategyTrades, this.defaultParams.asset, this.defaultParams.timeframe)
