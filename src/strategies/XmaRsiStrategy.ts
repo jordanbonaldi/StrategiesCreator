@@ -1,5 +1,5 @@
 import Strategy, { Persistence, StrategyParams } from "./Strategy";
-import { Alma, sma, reverseIndex, rsi, Zlema, atr, HeikinAshi, Smma, CandleCheck } from "@jordanbonaldi/indicatorsapi";
+import { Alma, ema, sma, reverseIndex, rsi, Zlema, atr, HeikinAshi, Smma, CandleCheck } from "@jordanbonaldi/indicatorsapi";
 import { CandleModel } from "@jordanbonaldi/binancefetcher";
 import { RiskType } from "../entity/BacktestParams";
 import Trade from "../entity/Trade";
@@ -16,7 +16,7 @@ export class XmaRsiInput implements StrategyParams {
         xmaRsiPeriod: 21,
         useAntiLag: true,
         xmaAntiLagPeriod: 7,
-        atrPeriod: 7,
+        atrPeriod: 14,
     };
     stopPercentage: number = 2;
     useStopLoss: boolean = true;
@@ -37,6 +37,20 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
         this.backTestParams.warm_up = this.defaultParams.data.xmaPeriod > this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod ? this.defaultParams.data.xmaPeriod : this.defaultParams.data.xmaRsiPeriod + this.defaultParams.data.rsiPeriod;
     }
 
+    myAtr(input: { period: number, values: CandleModel[] }): number[] {
+        let tr: number[] = []
+        for (var b = 1; b < input.values.length; b++) {
+            tr.push(
+                Math.max(
+                    Math.abs(input.values[b].high - input.values[b].low),
+                    Math.abs(input.values[b].high - input.values[b - 1].close),
+                    Math.abs(input.values[b].low - input.values[b - 1].close),
+                )
+            )
+        }
+        return Smma({ period: input.period, values: tr })
+    }
+
     /**
      *
      * @param candles Candle Model of type Candle
@@ -51,28 +65,24 @@ export default new class XmaRsiStrategy extends Strategy<XmaRsiInput, XmaPersist
         let lastCandle: CandleModel = reverseIndex(candles, 1);
         let liveCandle: CandleModel = reverseIndex(candles);
 
-        let indicatorsCandles = source.map(c => c.close).slice(0, -1);
-        let rsiCandles = source.map(c => c.close).slice(0, -1);
+        let indicatorsCandles: number[] = source.map(c => c.close).slice(0, -1);
+        let rsiCandles: number[] = source.map(c => c.close).slice(0, -1);
 
         let myXma: number[] = Alma({ period: params.data.xmaPeriod, values: indicatorsCandles, offset: 0.5, sigma: 6 });
-        let myRsi = rsi({ period: params.data.rsiPeriod, values: rsiCandles });
-        let myXmaRsi = Zlema({ period: params.data.xmaRsiPeriod, values: myRsi });
-        let myXmaAntiLag = Smma({ period: params.data.xmaAntiLagPeriod, values: indicatorsCandles });
-        // let myAtr = atr({
-        //     low: source.map(c => c.low),
-        //     high: source.map(c => c.high),
-        //     close: source.map(c => c.close),
-        //     period: params.data.atrPeriod,
-        // })
+        let myRsi: number[] = rsi({ period: params.data.rsiPeriod, values: rsiCandles });
+        let myXmaRsi: number[] = Zlema({ period: params.data.xmaRsiPeriod, values: myRsi });
+        let myXmaAntiLag: number[] = Smma({ period: params.data.xmaAntiLagPeriod, values: indicatorsCandles });
+        let myAtr: number[] = this.myAtr({ period: params.data.atrPeriod, values: candles.slice(0, -1) })
 
-        let isXmaBull = reverseIndex(myXma) > reverseIndex(myXma, 1);
-        let isXmaRsiBull = reverseIndex(myXmaRsi) > reverseIndex(myXmaRsi, 1);
-        let isXmaAntiLagBull = reverseIndex(myXmaAntiLag) > reverseIndex(myXmaAntiLag, 1);
+        let myXmaAtr: number[] = Smma({ period: params.data.atrPeriod, values: myAtr });
+        let isXmaBull: boolean = reverseIndex(myXma) > reverseIndex(myXma, 1);
+        let isXmaRsiBull: boolean = reverseIndex(myXmaRsi) > reverseIndex(myXmaRsi, 1);
+        let isXmaAntiLagBull: boolean = reverseIndex(myXmaAntiLag) > reverseIndex(myXmaAntiLag, 1);
 
-        let entryLongCond = isXmaBull && isXmaRsiBull && isXmaAntiLagBull;
-        let entryShortCond = !isXmaBull && !isXmaRsiBull && !isXmaAntiLagBull;
-        let exitLongCond = !isXmaBull;
-        let exitShortCond = isXmaBull;
+        let entryLongCond: boolean = isXmaBull && isXmaRsiBull && isXmaAntiLagBull;
+        let entryShortCond: boolean = !isXmaBull && !isXmaRsiBull && !isXmaAntiLagBull;
+        let exitLongCond: boolean = !isXmaBull;
+        let exitShortCond: boolean = isXmaBull;
         let stopLossLong: number = params.useStopLoss ? lastCandle.close * (1 - params.stopPercentage / 100) : 0;
         let stopLossShort: number = params.useStopLoss ? lastCandle.close * (1 + params.stopPercentage / 100) : 0;
 

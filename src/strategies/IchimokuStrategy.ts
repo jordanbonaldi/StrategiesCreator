@@ -181,10 +181,10 @@ export default new class IchimokuStrategy extends Strategy<IchimokuInput, IchiPe
         }
         else if (this.isSameCandle(this.data?.entryCandle, lastCandle) === false)
             currentTrade = trade.type === TradeTypes.LONG ? (
-                params.useStopLoss && trade.stoploss > lastCandle.low ? { //liveCandle.close
+                params.useStopLoss && trade.stoploss > lastCandle.low ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.LONG,
-                    price: trade.stoploss, //liveCandle.close
+                    price: trade.stoploss,
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,
@@ -201,10 +201,10 @@ export default new class IchimokuStrategy extends Strategy<IchimokuInput, IchiPe
                     date: new Date()
                 } : undefined
             ) : trade.type === TradeTypes.SHORT ? (
-                params.useStopLoss && trade.stoploss < lastCandle.high ? { //liveCandle.close
+                params.useStopLoss && trade.stoploss < lastCandle.high ? {
                     entryType: EntryType.EXIT,
                     type: TradeTypes.SHORT,
-                    price: trade.stoploss, //liveCandle.close
+                    price: trade.stoploss,
                     stoploss: 0,
                     exitType: ExitTypes.STOPLOSS,
                     asset: params.asset,

@@ -3,8 +3,8 @@ import StrategyResult from "./entity/StrategyResult";
 import { Trade } from ".";
 
 BinanceAlgorithmTests.connect()
-    .then(instance => instance.runBacktestOnAsset('IchimokuStrategy', {
+    .then(instance => instance.runStrategyOnAsset('XmaRsiStrategy', {
         asset: 'BTCUSDT',
-        timeframe: '4h'
+        timeframe: '1d'
     }).then((trade: any) => console.log(trade)));
 
